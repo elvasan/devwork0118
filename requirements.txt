@@ -1,0 +1,5 @@
+awscli
+pyspark
+boto3
+invoke
+jupyter
