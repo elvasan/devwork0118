@@ -31,8 +31,9 @@ def get_keypath(s3path):
 def updateglue(ctx):
     ctx.run("curl https://codeload.github.com/awslabs/aws-glue-libs/tar.gz/master | \
              tar -xvz --strip=1 aws-glue-libs-master/awsglue")
-    ctx.run("cp .awsglue_setup.py awsglue/setup.py")
-    ctx.run("pip install -e ./awsglue")
+    ctx.run("cp .awsglue_setup.py setup.py")
+    ctx.run("pip install -e .")
+    ctx.run("cp setup.py .awsglue_setup.py")
 
 
 @task
