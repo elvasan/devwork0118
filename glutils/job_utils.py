@@ -67,9 +67,8 @@ def _upload_jobfile(jobfile):
 
 def _create_job_directories(jobfile):
     staging = STAGING_PATH.format(_jobname_from_file(jobfile))
-    output = OUTPUT_PATH.format(_jobname_from_file(jobfile))
     tmp = TMP_PATH.format(_jobname_from_file(jobfile))
-    for k in [staging, output, tmp]:
+    for k in [staging, tmp]:
         s3.Bucket(JOB_BUCKET).put_object(Key=k, Body='')
 
 
