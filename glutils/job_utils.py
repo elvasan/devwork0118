@@ -15,7 +15,6 @@ output_log_base_uri = 'https://console.aws.amazon.com/cloudwatch/home?region=us-
 
 JOB_BUCKET = 'jornaya-dev-us-east-1-etl-code'
 JOB_PATH = 'glue/jobs/{}'
-OUTPUT_PATH = 'glue/jobs/output/{}/'
 STAGING_PATH = 'glue/jobs/staging/{}/'
 TMP_PATH = 'glue/jobs/tmp/{}/'
 

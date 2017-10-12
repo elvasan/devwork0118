@@ -61,7 +61,7 @@ n_schema = StructType([StructField("n", StringType())])
 s_schema = StructType([StructField("s", StringType())])
 sS_schema = StructType([StructField("sS", StringType())])
 
-df = df.select(from_json(df.account_code, s_schema).getItem('s').alias('account_code').cast(IntegerType()),
+df = df.select(from_json(df.account_code, s_schema).getItem('s').alias('account_code').cast(StringType()),
                from_json(df.audience_id_tags, sS_schema).getItem('sS').alias('audience_id_tags').cast(StringType()),
                from_json(df.campaign_javascript_version, s_schema).getItem('s').alias('campaign_javascript_version').cast(StringType()),
                from_json(df.created, n_schema).getItem('n').alias('created').cast(DecimalType(14, 4)),
