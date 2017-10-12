@@ -252,3 +252,6 @@ venv.bak/
 
 ## Project Specific
 awsglue/
+metastore_db/
+*.ipynb
+src_data/
