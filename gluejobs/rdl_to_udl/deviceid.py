@@ -2,12 +2,11 @@ import sys
 
 from pyspark.context import SparkContext
 from pyspark.sql.types import StringType, StructField, StructType, IntegerType, DecimalType
-from pyspark.sql.functions import col, from_json
+from pyspark.sql.functions import col, from_json, from_unixtime, to_date
 
 from awsglue.utils import getResolvedOptions
 from awsglue.context import GlueContext
 from awsglue.job import Job
-from awsglue.dynamicframe import DynamicFrame
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -63,12 +62,10 @@ df = df.select(
     from_json(df.uuid, s_schema).getItem('s').alias('uuid').cast(StringType()),
 )
 
-dyf = DynamicFrame.fromDF(df, glueContext, "dyf")
+df = df.withColumn('create_day', to_date(from_unixtime(df.created, 'yyyy-MM-dd')))
 
-# write to output dir
-glueContext.write_dynamic_frame.from_options(frame=dyf,
-                                             connection_type='s3',
-                                             connection_options={'path': output_dir},
-                                             format='parquet')
+df.write.parquet(output_dir,
+                 mode='overwrite',
+                 partitionBy=['create_day'])
 
 job.commit()

@@ -74,8 +74,8 @@ s_schema = StructType([StructField("s", StringType())])
 
 df = df.select(
     from_json(df.active, n_schema).getItem('n').alias('active').cast(IntegerType()),
-    from_json(df.affiliate_click_network, n_schema).getItem('n').alias('affiliate_click_network').cast(StringType()),
-    from_json(df.api_key, s_schema).getItem('s').alias('api_key').cast(IntegerType()),
+    from_json(df.affiliate_click_network, n_schema).getItem('n').alias('affiliate_click_network').cast(IntegerType()),
+    from_json(df.api_key, s_schema).getItem('s').alias('api_key').cast(StringType()),
     from_json(df.audit_auth, n_schema).getItem('n').alias('audit_auth').cast(IntegerType()),
     from_json(df.audit_full, n_schema).getItem('n').alias('audit_full').cast(IntegerType()),
     from_json(df.audit_pre, n_schema).getItem('n').alias('audit_pre').cast(IntegerType()),
