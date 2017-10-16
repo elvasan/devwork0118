@@ -65,7 +65,7 @@ df = df.select(
 df = df.withColumn('create_day', to_date(from_unixtime(df.created, 'yyyy-MM-dd')))
 
 df.write.parquet(output_dir,
-                 mode='overwrite',
+                 mode='overwrite',  # TODO: parameterize this option
                  partitionBy=['create_day'])
 
 job.commit()
