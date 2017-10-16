@@ -78,12 +78,6 @@ df = df.select(from_json(df.account_code, s_schema).getItem('s').alias('account_
                from_json(df.name, s_schema).getItem('s').alias('name').cast(StringType()),
                from_json(df.threatmetrix_default, n_schema).getItem('n').alias('threatmetrix_default').cast(IntegerType()))
 
-dyf = DynamicFrame.fromDF(df, glueContext, "dyf")
-
-# write to output dir
-glueContext.write_dynamic_frame.from_options(frame=dyf,
-                                             connection_type='s3',
-                                             connection_options={'path': output_dir},
-                                             format='parquet')
-
+df.write.parquet(output_dir,
+                 mode='overwrite')
 job.commit()
