@@ -1,6 +1,6 @@
 from invoke import task
 
-from glutils.task_utils import update_or_create_job, run_glue_job, get_glue_job
+from invutils.task_utils import update_or_create_job, run_glue_job, get_glue_job
 
 
 def get_bucket(s3path):

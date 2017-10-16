@@ -1,4 +1,6 @@
 import os
+# import shutil
+from zipfile import ZipFile
 import time
 import pprint
 
@@ -30,7 +32,8 @@ JOB_DICT = {
     },
     'DefaultArguments': {
         '--TempDir': '',
-        '--job-bookmark-option': 'job-bookmark-disable'
+        '--job-bookmark-option': 'job-bookmark-disable',
+        '--extra-py-files': ''
     },
     'MaxRetries': 0,
     'AllocatedCapacity': 1
@@ -41,8 +44,20 @@ def _humanize_seconds(seconds):
     return '{}m:{}s'.format(int(seconds/60), seconds % 60)
 
 
+def _file_from_path(filepath):
+    return os.path.split(filepath)[1]
+
+
+def _filename_from_filepath(filepath):
+    return os.path.splitext(_file_from_path(filepath))[0]
+
+
 def _jobname_from_file(filename):
     return os.path.splitext(filename)[0]
+
+
+def _package_path_from_jobfile(jobfile, pkgname):
+    return os.path.join(os.path.dirname(JOB_PATH.format(_jobname_from_file(jobfile))), pkgname)
 
 
 def _get_s3path(s3object):
@@ -50,9 +65,13 @@ def _get_s3path(s3object):
 
 
 def _build_job_dict(jobfile, s3key, dpu):
+    tmp = TMP_PATH.format(_jobname_from_file(jobfile))
+    zipname = f'{_filename_from_filepath(jobfile)}_libs.zip'
     JOB_DICT['Name'] = _jobname_from_file(jobfile)
     JOB_DICT['Command']['ScriptLocation'] = s3key
-    JOB_DICT['DefaultArguments']['--TempDir'] = 's3://{}/{}'.format(JOB_BUCKET, TMP_PATH)
+    JOB_DICT['DefaultArguments']['--TempDir'] = 's3://{}/{}'.format(JOB_BUCKET, tmp)
+    JOB_DICT['DefaultArguments']['--extra-py-files'] = 's3://{}/{}'.format(JOB_BUCKET,
+                                                                           _package_path_from_jobfile(jobfile, zipname))
     JOB_DICT['AllocatedCapacity'] = int(dpu)
     return JOB_DICT
 
@@ -71,7 +90,26 @@ def _create_job_directories(jobfile):
         s3.Bucket(JOB_BUCKET).put_object(Key=k, Body='')
 
 
+def _zipdir(path, zfile):
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            zfile.write(os.path.join(root, file))
+
+
+def _upload_packages(jobfile):
+    # create the default zip with glutils package
+    zipname = f'{_filename_from_filepath(jobfile)}_libs.zip'
+    zippath = f'./libs/{zipname}'
+    with ZipFile(zippath, 'w') as zf:
+        _zipdir('./glutils', zf)
+
+    keypath = _package_path_from_jobfile(jobfile, zipname)
+    with open(zippath, 'rb') as data:
+        s3.Bucket(JOB_BUCKET).put_object(Key=keypath, Body=data)
+
+
 def update_or_create_job(jobfile, dpu):
+    _upload_packages(jobfile)
     try:
         if client.get_job(JobName=_jobname_from_file(jobfile)):
             print("Updating Existing Job: {}".format(_jobname_from_file(jobfile)))
