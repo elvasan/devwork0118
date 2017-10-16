@@ -113,7 +113,6 @@ df = df.select(
     from_json(df.version, s_schema).getItem('s').alias('version').cast(StringType()),
 )
 
-
 df = df.withColumn('create_day', to_date(from_unixtime(df.created, 'yyyy-MM-dd')))
 
 df.write.parquet(output_dir,
