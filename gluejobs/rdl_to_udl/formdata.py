@@ -1,41 +1,81 @@
 import sys
 
+from pyspark.sql import SparkSession
 from pyspark.context import SparkContext
 from pyspark.sql.types import StringType, IntegerType, DecimalType, LongType
 from pyspark.sql.functions import col, from_json, from_unixtime, to_date, udf, coalesce
 
-from awsglue.utils import getResolvedOptions
-from awsglue.context import GlueContext
-from awsglue.job import Job
+# from awsglue.utils import getResolvedOptions
+# from awsglue.context import GlueContext
+# from awsglue.job import Job
 
-from glutils.job_objects import n_schema, s_schema, bOOL_schema, m_schema, b_schema
-from glutils.job_utils import zipped_b64_to_string
+# TODO: use imports instead of Temp Fix
+# from glutils.job_objects import n_schema, s_schema, bOOL_schema, m_schema, b_schema
+# from glutils.job_utils import zipped_b64_to_string
 
-args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+####################
+##### Temp Fix #####
+####################
+from pyspark.sql.types import StructField, StructType
 
+
+# DynamoDB Objects
+n_schema = StructType([StructField("n", StringType())])
+s_schema = StructType([StructField("s", StringType())])
+sS_schema = StructType([StructField("sS", StringType())])
+bOOL_schema = StructType([StructField("bOOL", StringType())])
+m_schema = StructType([StructField('m', StringType())])
+b_schema = StructType([StructField('b', StringType())])
+
+import base64
+import zlib
+
+
+def zipped_b64_to_string(val):
+    if val:
+        zipped_string = base64.b64decode(val)
+        return zlib.decompress(zipped_string, 16+zlib.MAX_WBITS).decode('utf-8')
+
+spark = SparkSession.builder.appName('formdata').getOrCreate()
+staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format('rdl_to_udl/formdata')
+temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format('rdl_to_udl/formdata')
+output_dir = "s3://jornaya-dev-us-east-1-udl/formdata"
+########################
+##### END Temp Fix #####
+########################
+
+# TODO: uncomment when we go back to Glue
+# args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+# TODO: uncomment when we go back to Glue
 # context and job setup
-sc = SparkContext()
-glueContext = GlueContext(sc)
-spark = glueContext.spark_session
-job = Job(glueContext)
-job.init(args['JOB_NAME'], args)
+# sc = SparkContext()
+# glueContext = GlueContext(sc)
+# spark = glueContext.spark_session
+# job = Job(glueContext)
+# job.init(args['JOB_NAME'], args)
 
 # define catalog source
-db_name = 'rdl'
-tbl_name = 'formdata'
+# TODO: use the full dataset when we know why it's breaking
+# db_name = 'rdl'
+# tbl_name = 'formdata'
+# db_name = 'pete'
+# tbl_name = 'created_2017_09_01'
 
 # output directories
-# TODO: pass these file paths in as args instead of hardcoding them
-output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(tbl_name)
-staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
-temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
+# TODO: use the full dataset when we know why it's breaking
+# output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(tbl_name)
+# staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
+# temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
+
 
 # Create dynamic frames from the source tables
-formdata = glueContext.create_dynamic_frame.from_catalog(database=db_name,
-                                                         table_name=tbl_name,
-                                                         transformation_ctx='formdata')
+# formdata = glueContext.create_dynamic_frame.from_catalog(database=db_name,
+#                                                          table_name=tbl_name,
+#                                                          transformation_ctx='formdata')
 
-df = formdata.toDF().repartition(200)
+df = spark.read.parquet('s3://jornaya-dev-us-east-1-rdl/formdata').repartition(200)
+# df = formdata.toDF().repartition(200)
 
 keys = [
     'checked',
@@ -113,7 +153,8 @@ df = df.select([c for c in df.columns if c in keys])
 df = df.withColumn('create_day', to_date(from_unixtime(df.created, 'yyyy-MM-dd')))
 
 df.write.parquet(output_dir,
-                 mode='overwrite',  # TODO: parameterize this option
+                 mode='overwrite',
                  partitionBy=['create_day'])
 
-job.commit()
+# TODO: uncomment when we go back to Glue
+# job.commit()
