@@ -55,8 +55,8 @@ df = (df
 
 df = df.select(
     from_json(df.created, n_schema).getItem('n').alias('created').cast(DecimalType(14, 4)),
-    from_json(df.http_User_Agent, s_schema).getItem('s').alias('http_User-Agent').cast(StringType()),
-    from_json(df.http_X_Forwarded_For, s_schema).getItem('s').alias('http_X-Forwarded-For').cast(StringType()),
+    from_json(df.http_User_Agent, s_schema).getItem('s').alias('http_User_Agent').cast(StringType()),
+    from_json(df.http_X_Forwarded_For, s_schema).getItem('s').alias('http_X_Forwarded_For').cast(StringType()),
     from_json(df.methods, n_schema).getItem('n').alias('methods').cast(IntegerType()),
     from_json(df.token, s_schema).getItem('s').alias('token').cast(StringType()),
     from_json(df.uuid, s_schema).getItem('s').alias('uuid').cast(StringType()),

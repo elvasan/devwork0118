@@ -77,9 +77,9 @@ df = df.select(
     from_json(df.email, n_schema).getItem('n').alias('email').cast(IntegerType()),
     from_json(df.execution_time, n_schema).getItem('n').alias('execution_time').cast(IntegerType()),
     from_json(df.fieldvisibility, m_schema).getItem('m').alias('fieldvisibility').cast(StringType()),
-    from_json(df.http_Content_Length, n_schema).getItem('n').alias('http_Content-Length').cast(IntegerType()),
-    from_json(df.http_User_Agent, s_schema).getItem('s').alias('http_User-Agent').cast(StringType()),
-    from_json(df.http_X_Forwarded_For, s_schema).getItem('s').alias('http_X-Forwarded-For').cast(StringType()),
+    from_json(df.http_Content_Length, n_schema).getItem('n').alias('http_Content_Length').cast(IntegerType()),
+    from_json(df.http_User_Agent, s_schema).getItem('s').alias('http_User_Agent').cast(StringType()),
+    from_json(df.http_X_Forwarded_For, s_schema).getItem('s').alias('http_X_Forwarded_For').cast(StringType()),
     from_json(df.id, s_schema).getItem('s').alias('id').cast(StringType()),
     # need further processing on these next two lines
     # base64 decode then unzip then coalesce the two tmp rows into a single row
