@@ -82,7 +82,7 @@ df = (df
 
 df = df.select(
     from_json(df.client_time, s_schema).getItem('s').alias('client_time').cast(LongType()),
-    from_json(df.created, s_schema).getItem('s').alias('created').cast(DecimalType(14, 4)),
+    from_json(df.created, n_schema).getItem('n').alias('created').cast(DecimalType(14, 4)),
     from_json(df.dst, s_schema).getItem('s').alias('dst').cast(BooleanType()),
     from_json(df.execution_time, s_schema).getItem('s').alias('execution_time').cast(IntegerType()),
     from_json(df.flash_version, s_schema).getItem('s').alias('flash_version').cast(StringType()),

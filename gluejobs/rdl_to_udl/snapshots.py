@@ -19,7 +19,7 @@ job.init(args['JOB_NAME'], args)
 
 # define catalog source
 db_name = 'rdl'
-tbl_name = 'urls'
+tbl_name = 'snapshots'
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
@@ -28,11 +28,11 @@ staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
 # Create dynamic frames from the source tables
-urls = glueContext.create_dynamic_frame.from_catalog(database=db_name,
+snapshots = glueContext.create_dynamic_frame.from_catalog(database=db_name,
                                                      table_name=tbl_name,
-                                                     transformation_ctx='urls')
+                                                     transformation_ctx='snapshots')
 
-df = urls.toDF()
+df = snapshots.toDF()
 
 keys = [
   'capture_time',
@@ -74,13 +74,13 @@ df = df.select(
     from_json(df.http_x_forwarded_for, s_schema).getItem('s').alias('http_X_Forwarded_For').cast(StringType()),
     from_json(df.page_id, s_schema).getItem('s').alias('page_id').cast(StringType()),
     from_json(df.sequence_number, n_schema).getItem('n').alias('sequence_number').cast(ShortType()),
-    from_json(df.server_time, s_schema).getItem('n').alias('server_time').cast(DecimalType(14, 4)),
+    from_json(df.server_time, n_schema).getItem('n').alias('server_time').cast(DecimalType(14, 4)),
     from_json(df.token, s_schema).getItem('s').alias('token').cast(StringType()),
     from_json(df.type, s_schema).getItem('s').alias('type').cast(StringType()),
     from_json(df.url, s_schema).getItem('s').alias('url').cast(StringType()),
 )
 
-df = df.withColumn('create_day', to_date(from_unixtime(df.created, 'yyyy-MM-dd')))
+df = df.withColumn('create_day', to_date(from_unixtime(df.server_time, 'yyyy-MM-dd')))
 
 df.write.parquet(output_dir,
                  mode='overwrite',
