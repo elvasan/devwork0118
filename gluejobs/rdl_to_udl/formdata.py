@@ -21,7 +21,7 @@ job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
 # define catalog source
-db_name = 'rdl'
+# db_name = 'rdl'
 tbl_name = 'formdata'
 
 # output directories
@@ -31,11 +31,13 @@ staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
 # Create dynamic frames from the source tables
-formdata = glueContext.create_dynamic_frame.from_catalog(database=db_name,
-                                                         table_name=tbl_name,
-                                                         transformation_ctx='formdata')
+# formdata = glueContext.create_dynamic_frame.from_catalog(database=db_name,
+#                                                          table_name=tbl_name,
+#                                                          transformation_ctx='formdata')
 
-df = formdata.toDF().repartition(200)
+df = spark.read.parquet('s3://jornaya-dev-us-east-1-rdl/{}'.format(tbl_name))
+df = df.repartition(1000)
+# df = formdata.toDF().repartition(200)
 
 keys = [
     'checked',
@@ -112,8 +114,12 @@ df = df.select([c for c in df.columns if c in keys])
 # add the partition column
 df = df.withColumn('create_day', to_date(from_unixtime(df.created, 'yyyy-MM-dd')))
 
-df.write.parquet(output_dir,
-                 mode='overwrite',  # TODO: parameterize this option
-                 partitionBy=['create_day'])
+# df.write.parquet(output_dir,
+#                  mode='overwrite',
+#                  partitionBy=['create_day, create_hour'])
+
+# TODO: Chris Snyder's Method, consider these?
+df.repartition('create_day').write.mode('overwrite').partitionBy('create_day').parquet(output_dir)
+# df.write.partitionBy('create_day').parquet(output_dir, mode='overwrite')
 
 job.commit()
