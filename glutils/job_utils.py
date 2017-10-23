@@ -15,4 +15,4 @@ def zipped_b64_to_string(val):
 
 def code_format(val):
     if val:
-        return val.replace(" ", "_").upper()
+        return val.strip().replace(" ", "_").upper()
