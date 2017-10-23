@@ -2,7 +2,7 @@ import sys
 
 from pyspark.context import SparkContext
 from pyspark.sql.types import StringType, StructField, StructType
-from pyspark.sql.functions import col, from_json
+from pyspark.sql.functions import col, from_json, current_timestamp
 
 from awsglue.utils import getResolvedOptions
 from awsglue.context import GlueContext
@@ -51,6 +51,8 @@ df = df.select(
     from_json(df.hash, s_schema).getItem('s').alias('hash').cast(StringType()),
     from_json(df.hash_type, s_schema).getItem('s').alias('hash_type').cast(StringType()),
 )
+
+df = df.withColumn("etl_ts", current_timestamp())
 
 df.write.parquet(output_dir,
                  mode='overwrite')
