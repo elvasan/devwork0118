@@ -1,13 +1,12 @@
 import sys
 
 from pyspark.context import SparkContext
-from pyspark.sql.types import StringType, StructField, StructType, IntegerType, DecimalType
+from pyspark.sql.types import StringType, StructField, StructType, IntegerType
 from pyspark.sql.functions import col, from_json
 
 from awsglue.utils import getResolvedOptions
 from awsglue.context import GlueContext
 from awsglue.job import Job
-from awsglue.dynamicframe import DynamicFrame
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -84,7 +83,7 @@ df = df.select(
     from_json(df.code, s_schema).getItem('s').alias('code').cast(StringType()),
     from_json(df.contribute, n_schema).getItem('n').alias('contribute').cast(IntegerType()),
     from_json(df.create, n_schema).getItem('n').alias('create').cast(IntegerType()),
-    from_json(df.created, n_schema).getItem('n').alias('created').cast(DecimalType(14, 4)),
+    from_json(df.created, n_schema).getItem('n').alias('created').cast(IntegerType()),
     from_json(df.email, s_schema).getItem('s').alias('email').cast(StringType()),
     from_json(df.entity_code, s_schema).getItem('s').alias('entity_code').cast(StringType()),
     from_json(df.industry, n_schema).getItem('n').alias('industry').cast(IntegerType()),
@@ -95,7 +94,7 @@ df = df.select(
     from_json(df.logging, n_schema).getItem('n').alias('logging').cast(IntegerType()),
     from_json(df.marketplace, n_schema).getItem('n').alias('marketplace').cast(IntegerType()),
     from_json(df.mobile_network, n_schema).getItem('n').alias('mobile_network').cast(IntegerType()),
-    from_json(df.modified, n_schema).getItem('n').alias('modified').cast(DecimalType(14, 4)),
+    from_json(df.modified, n_schema).getItem('n').alias('modified').cast(IntegerType()),
     from_json(df.name, s_schema).getItem('s').alias('name').cast(StringType()),
     from_json(df.referral_source, s_schema).getItem('s').alias('referral_source').cast(StringType()),
     from_json(df.role, s_schema).getItem('s').alias('role').cast(IntegerType()),
