@@ -10,6 +10,7 @@ from pyspark.sql.types import StructField, StructType, StringType
 n_schema = StructType([StructField("n", StringType())])
 s_schema = StructType([StructField("s", StringType())])
 sS_schema = StructType([StructField("sS", StringType())])
+nS_schema = StructType([StructField("nS", StringType())])
 bOOL_schema = StructType([StructField("bOOL", StringType())])
 m_schema = StructType([StructField('m', StringType())])
 b_schema = StructType([StructField('b', StringType())])
