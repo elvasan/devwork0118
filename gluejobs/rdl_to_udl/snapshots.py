@@ -7,6 +7,7 @@ from pyspark.sql.functions import col, from_json, from_unixtime, to_date
 from awsglue.utils import getResolvedOptions
 from awsglue.context import GlueContext
 from awsglue.job import Job
+from glutils.job_objects import n_schema, s_schema, nS_schema
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -55,9 +56,6 @@ keys = [
 exprs = [col("item").getItem(k).alias(k) for k in keys]
 df = df.select(*exprs)
 
-n_schema = StructType([StructField("n", StringType())])
-s_schema = StructType([StructField("s", StringType())])
-
 df = (df
       .withColumnRenamed('http_Content-Length', 'http_content_length')
       .withColumnRenamed('http_User-Agent', 'http_user_agent')
@@ -68,7 +66,7 @@ df = df.select(
     from_json(df.client_time, n_schema).getItem('n').alias('client_time').cast(LongType()),
     from_json(df.content_hash, s_schema).getItem('s').alias('content_hash').cast(StringType()),
     from_json(df.content_url, s_schema).getItem('s').alias('content_url').cast(StringType()),
-    from_json(df.element_ids, s_schema).getItem('s').alias('element_ids').cast(ShortType()),
+    from_json(df.element_ids, nS_schema).getItem('nS').alias('element_ids').cast(ShortType()),
     from_json(df.http_content_length, n_schema).getItem('n').alias('http_Content_Length').cast(IntegerType()),
     from_json(df.http_user_agent, s_schema).getItem('s').alias('http_User_Agent').cast(StringType()),
     from_json(df.http_x_forwarded_for, s_schema).getItem('s').alias('http_X_Forwarded_For').cast(StringType()),
