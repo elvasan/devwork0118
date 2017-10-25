@@ -1,6 +1,8 @@
 import sys
 
 from pyspark.context import SparkContext
+from pyspark.sql.types import StringType, IntegerType
+from pyspark.sql.functions import current_timestamp, lit
 
 from awsglue.utils import getResolvedOptions
 from awsglue.context import GlueContext
@@ -31,6 +33,12 @@ code_ref = glueContext.create_dynamic_frame.from_catalog(database=db_name,
                                                          transformation_ctx='code_ref')
 
 df = code_ref.toDF()
+
+df = df \
+  .withColumn("insert_ts", current_timestamp()) \
+  .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
+  .withColumn("insert_batch_run_id", lit(1).cast(IntegerType())) \
+  .withColumn("load_action_ind", lit('i').cast(StringType()))
 
 df.write.parquet(output_dir,
                  mode='overwrite')

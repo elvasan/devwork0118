@@ -208,6 +208,12 @@ tblproperties ("orc.compress"="SNAPPY")
 
 ```
 
+## AWS CLI Commands
+Copy all files recursively to a local directory
+```
+aws --profile=jornaya-dev s3 cp s3://jornaya-dev-us-east-1-udl/accounts ./src_data/UDL/accounts --recursive 
+```
+
 ## Amazon resources
 https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-crawler-pyspark-extensions-python-intro.html
 https://forums.aws.amazon.com/forum.jspa?forumID=262&start=0
