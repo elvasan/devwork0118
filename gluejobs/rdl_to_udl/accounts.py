@@ -19,7 +19,6 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-
 # define catalog source
 TBL_NAME = 'accounts'
 
@@ -33,7 +32,6 @@ temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['J
 # Create data frame from the source tables
 df = spark.read.parquet(source_dir)
 
-# TODO: generate this list from the DDL
 keys = ['active',
         'affiliate_click_network',
         'api_key',
@@ -100,6 +98,7 @@ df = df.select(
     from_json(df['testing'], n_schema).getItem('n').alias('testing').cast(IntegerType()),
     from_json(df['website'], s_schema).getItem('s').alias('website').cast(StringType()))
 
+# add the job run columns
 df = df \
   .withColumn("insert_ts", current_timestamp()) \
   .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \

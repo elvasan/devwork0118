@@ -1,8 +1,8 @@
 import sys
 
 from pyspark.context import SparkContext
-from pyspark.sql.types import StringType
-from pyspark.sql.functions import udf, col
+from pyspark.sql.types import StringType, IntegerType
+from pyspark.sql.functions import udf, col, current_timestamp, lit
 
 from awsglue.utils import getResolvedOptions
 from awsglue.context import GlueContext
@@ -20,21 +20,17 @@ job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
 # define catalog source
-db_name = 'rdl'
-tbl_name = 'code_ref'
+TBL_NAME = 'code_ref'
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
-output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(tbl_name)
+source_dir = "s3://jornaya-dev-us-east-1-rdl/{}".format(TBL_NAME)
+output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(TBL_NAME)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
-# Create dynamic frames from the source tables
-code_ref = glueContext.create_dynamic_frame.from_catalog(database=db_name,
-                                                         table_name=tbl_name,
-                                                         transformation_ctx='code_ref')
-
-df = code_ref.toDF()
+# Create data frame from the source tables
+df = spark.read.parquet(source_dir)
 
 code_format_udf = udf(code_format, StringType())
 df = df.withColumn('value_cd', code_format_udf('value_cd'))
@@ -42,6 +38,12 @@ df = df.withColumn('value_cd', code_format_udf('value_cd'))
 # cast all vals to stringtype
 df = df.select([col(x).alias(x).cast(StringType()) for x in df.schema.names])
 
+df = df \
+  .withColumn("insert_ts", current_timestamp()) \
+  .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
+  .withColumn("insert_batch_run_id", lit(1).cast(IntegerType()))
+
+# TODO: pass the write mode in as an arg
 df.write.parquet(output_dir,
                  mode='overwrite')
 

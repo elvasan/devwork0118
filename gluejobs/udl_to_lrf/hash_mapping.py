@@ -47,7 +47,7 @@ join_df = pii_hashing_udl_df.alias('pii').\
   select(col('pii.canonical_hash').alias('canonical_hash_value'),
          col('code_ref.value_cd').alias('hash_type_cd'),
          col('pii.hash').alias('hash_value'),
-         col('pii.etl_ts').alias('source_ts'))
+         col('pii.insert_ts').alias('source_ts'))  # store the UDL timestamp because the FDL record doesn't have one
 
 join_with_jobs_df = join_df \
   .withColumn("insert_ts", current_timestamp()) \
