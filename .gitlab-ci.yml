@@ -1,0 +1,33 @@
+image: python:3.6
+
+stages:
+  - test
+  - deploy
+
+.deploy_template: &deploy_template
+  stage: deploy
+  when: manual
+  tags:
+    - docker
+  before_script:
+    - export AWS_DEFAULT_REGION="us-east-1"
+    - pip install .
+  script:
+    - glue-deployer job-destroy -e ${ENV} -a rdl_to_udl
+    - glue-deployer job-destroy -e ${ENV} -a udl_to_lrf
+    - glue-deployer job-create -e ${ENV} -a rdl_to_udl
+    - glue-deployer job-create -e ${ENV} -a udl_to_lrf
+
+deploy to dev:
+  <<: *deploy_template
+  variables:
+    ENV: dev
+  environment:
+    name: dev
+
+deploy to qa:
+  <<: *deploy_template
+  variables:
+    ENV: qa
+  environment:
+    name: qa
