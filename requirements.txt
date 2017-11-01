@@ -3,3 +3,4 @@ pyspark
 boto3
 invoke
 jupyter
+coverage
