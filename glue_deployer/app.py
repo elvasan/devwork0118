@@ -5,12 +5,13 @@ from glue_deployer.deployer_utils import update_or_create_job, destroy_job, \
     update_or_create_all_jobs_for_stage, destroy_all_jobs_for_stage
 
 # Configure Logging
-logger = logging.getLogger()
-handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+LOGGER = logging.getLogger()
+HANDLER = logging.StreamHandler()
+FORMATTER = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+HANDLER.setFormatter(FORMATTER)
+LOGGER.addHandler(HANDLER)
+LOGGER.setLevel(logging.INFO)
+
 
 # Parser
 def create_parser():
@@ -32,7 +33,7 @@ def create_parser():
     parser_destroy_jobs.add_argument('-e', '--environment', help='Environment name to use in the S3 buckets')
     parser_destroy_jobs.add_argument('-j', '--jobfile', help='Local path to the glue job pyspark file')
     parser_destroy_jobs.add_argument('-a', '--all', help='Stage name to destroy all jobs for.')
-    parser_destroy_jobs.add_argument('-v', '--verbose', action='store_true', help='Turns debug logging on, very chatty.')
+    parser_destroy_jobs.add_argument('-v', '--verbose', action='store_true', help='Turn debug logging on, very chatty.')
 
     return parser
 
@@ -44,7 +45,7 @@ def main():
     # job subparsers
     if args.subcommand == 'job-create':
         if args.verbose:
-            logger.setLevel(logging.DEBUG)
+            LOGGER.setLevel(logging.DEBUG)
         if args.all:
             update_or_create_all_jobs_for_stage(args.all,
                                                 args.environment)
@@ -53,12 +54,11 @@ def main():
                                  env=args.environment)
     elif args.subcommand == 'job-destroy':
         if args.verbose:
-            logger.setLevel(logging.DEBUG)
+            LOGGER.setLevel(logging.DEBUG)
         if args.all:
             destroy_all_jobs_for_stage(args.all,
                                        args.environment)
         else:
-            pass
             destroy_job(jobfile=args.jobfile,
                         env=args.environment)
     else:
