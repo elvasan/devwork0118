@@ -42,10 +42,3 @@ deploy to dev:
     ENV: dev
   environment:
     name: dev
-
-deploy to qa:
-  <<: *deploy_template
-  variables:
-    ENV: qa
-  environment:
-    name: qa
