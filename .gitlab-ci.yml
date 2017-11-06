@@ -27,7 +27,6 @@ stages:
 
 lint:
   <<: *test_template
-  allow_failure: true
   script:
     - prospector
 
