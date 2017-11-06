@@ -8,8 +8,10 @@ from botocore.exceptions import ClientError
 
 logger = logging.getLogger('glue_deployer.deployer_utils')
 
-ERROR_LOG_BASE_URI = 'https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logEventViewer:group=/aws-glue/jobs/error;stream={}'
-OUTPUT_LOG_BASE_URI = 'https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logEventViewer:group=/aws-glue/jobs/output;stream={}'
+ERROR_LOG_BASE_URI = 'https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logEventViewer:group=\
+/aws-glue/jobs/error;stream={}'
+OUTPUT_LOG_BASE_URI = 'https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logEventViewer:group=\
+/aws-glue/jobs/output;stream={}'
 
 JOB_BUCKET = 'jornaya-{}-us-east-1-etl-code'
 JOB_PATH = 'glue/jobs/{}'
@@ -113,14 +115,14 @@ def _recursive_s3_delete(path_const, jobfile, env, s3_client):
                                      Delete=argdict)
             argdict = dict(Objects=[])
 
-    if len(argdict['Objects']):
+    if argdict['Objects']:
         logger.debug("Destroying Artifact: {}".format(argdict['Objects'][0]['Key']))
         s3_client.delete_objects(Bucket=_get_job_bucket(env),
                                  Delete=argdict)
 
 
 def _zipdir(path, zfile):
-    for root, dirs, files in os.walk(path):
+    for root, _, files in os.walk(path):
         for file in files:
             target = os.path.join(root, file)
             logger.debug(f'Creating zipfile: {target}')

@@ -4,9 +4,9 @@ from pyspark.context import SparkContext
 from pyspark.sql.types import StringType, IntegerType
 from pyspark.sql.functions import col, from_json, current_timestamp, lit
 
-from awsglue.utils import getResolvedOptions
-from awsglue.context import GlueContext
-from awsglue.job import Job
+from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
+from awsglue.context import GlueContext  # pylint: disable=import-error
+from awsglue.job import Job  # pylint: disable=import-error
 
 from glutils.job_objects import n_schema, s_schema, sS_schema
 
@@ -56,7 +56,8 @@ df = df.select(*exprs)
 
 df = df.select(from_json(df['account_code'], s_schema).getItem('s').alias('account_code').cast(StringType()),
                from_json(df['audience_id_tags'], sS_schema).getItem('sS').alias('audience_id_tags').cast(StringType()),
-               from_json(df['campaign_javascript_version'], s_schema).getItem('s').alias('campaign_javascript_version').cast(StringType()),
+               from_json(df['campaign_javascript_version'],
+                         s_schema).getItem('s').alias('campaign_javascript_version').cast(StringType()),
                from_json(df['created'], n_schema).getItem('n').alias('created').cast(IntegerType()),
                from_json(df['created_by'], n_schema).getItem('n').alias('created_by').cast(IntegerType()),
                from_json(df['description'], s_schema).getItem('s').alias('description').cast(StringType()),
@@ -69,7 +70,8 @@ df = df.select(from_json(df['account_code'], s_schema).getItem('s').alias('accou
                from_json(df['modified'], n_schema).getItem('n').alias('modified').cast(IntegerType()),
                from_json(df['modified_by'], n_schema).getItem('n').alias('modified_by').cast(IntegerType()),
                from_json(df['name'], s_schema).getItem('s').alias('name').cast(StringType()),
-               from_json(df['threatmetrix_default'], n_schema).getItem('n').alias('threatmetrix_default').cast(IntegerType()))
+               from_json(df['threatmetrix_default'],
+                         n_schema).getItem('n').alias('threatmetrix_default').cast(IntegerType()))
 
 df = df \
   .withColumn("insert_ts", current_timestamp()) \

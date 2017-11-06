@@ -10,7 +10,7 @@ import zlib
 def zipped_b64_to_string(val):
     if val:
         zipped_string = base64.b64decode(val)
-        return zlib.decompress(zipped_string, 16+zlib.MAX_WBITS).decode('utf-8')
+        return zlib.decompress(zipped_string, 16 + zlib.MAX_WBITS).decode('utf-8')
 
 
 def code_format(val):

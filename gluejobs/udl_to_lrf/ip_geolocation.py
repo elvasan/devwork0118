@@ -2,11 +2,11 @@ import sys
 
 from pyspark.context import SparkContext
 from pyspark.sql.types import StringType, IntegerType
-from pyspark.sql.functions import col, current_timestamp, upper, lit, udf, coalesce, concat_ws, md5
+from pyspark.sql.functions import col, current_timestamp, upper, lit, coalesce, concat_ws, md5
 
-from awsglue.utils import getResolvedOptions
-from awsglue.context import GlueContext
-from awsglue.job import Job
+from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
+from awsglue.context import GlueContext  # pylint: disable=import-error
+from awsglue.job import Job  # pylint: disable=import-error
 
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])

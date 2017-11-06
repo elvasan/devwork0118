@@ -1,4 +1,4 @@
-from distutils.core import setup
+from distutils.core import setup  # pylint: disable=import-error
 
 setup(
     name='glue_deployer',

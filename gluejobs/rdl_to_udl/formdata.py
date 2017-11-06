@@ -4,9 +4,9 @@ from pyspark.context import SparkContext
 from pyspark.sql.types import StringType, IntegerType, DoubleType, LongType
 from pyspark.sql.functions import col, from_json, from_unixtime, to_date, udf, coalesce
 
-from awsglue.utils import getResolvedOptions
-from awsglue.context import GlueContext
-from awsglue.job import Job
+from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
+from awsglue.context import GlueContext  # pylint: disable=import-error
+from awsglue.job import Job  # pylint: disable=import-error
 
 from glutils.job_objects import n_schema, s_schema, bOOL_schema, m_schema, b_schema
 from glutils.job_utils import zipped_b64_to_string
