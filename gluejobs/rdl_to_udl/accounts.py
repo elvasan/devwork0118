@@ -4,9 +4,9 @@ from pyspark.context import SparkContext
 from pyspark.sql.types import StringType, IntegerType
 from pyspark.sql.functions import col, from_json, current_timestamp, lit
 
-from awsglue.utils import getResolvedOptions
-from awsglue.context import GlueContext
-from awsglue.job import Job
+from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
+from awsglue.context import GlueContext  # pylint: disable=import-error
+from awsglue.job import Job  # pylint: disable=import-error
 
 from glutils.job_objects import n_schema, s_schema
 
@@ -69,7 +69,8 @@ df = df.select(*exprs)
 # TODO: generate the types from the DDL
 df = df.select(
     from_json(df['active'], n_schema).getItem('n').alias('active').cast(IntegerType()),
-    from_json(df['affiliate_click_network'], n_schema).getItem('n').alias('affiliate_click_network').cast(IntegerType()),
+    from_json(df['affiliate_click_network'],
+              n_schema).getItem('n').alias('affiliate_click_network').cast(IntegerType()),
     from_json(df['api_key'], s_schema).getItem('s').alias('api_key').cast(StringType()),
     from_json(df['audit_auth'], n_schema).getItem('n').alias('audit_auth').cast(IntegerType()),
     from_json(df['audit_full'], n_schema).getItem('n').alias('audit_full').cast(IntegerType()),

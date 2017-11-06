@@ -4,9 +4,9 @@ from pyspark.context import SparkContext
 from pyspark.sql.types import StringType, IntegerType, DoubleType, LongType
 from pyspark.sql.functions import col, from_json, from_unixtime, to_date, current_timestamp, lit
 
-from awsglue.utils import getResolvedOptions
-from awsglue.context import GlueContext
-from awsglue.job import Job
+from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
+from awsglue.context import GlueContext  # pylint: disable=import-error
+from awsglue.job import Job  # pylint: disable=import-error
 
 from glutils.job_objects import n_schema, s_schema
 
@@ -71,37 +71,37 @@ df = df.select(*exprs)
 
 # TODO: generate the types from the DDL
 df = df.select(
-    from_json(df['ip'],n_schema).getItem('n').alias('ip').cast(LongType()),
-    from_json(df['account_code'],s_schema).getItem('s').alias('account_code').cast(StringType()),
-    from_json(df['browser'],s_schema).getItem('s').alias('browser').cast(StringType()),
-    from_json(df['browser_maker'],s_schema).getItem('s').alias('browser_maker').cast(StringType()),
-    from_json(df['browser_name'],s_schema).getItem('s').alias('browser_name').cast(StringType()),
-    from_json(df['browser_name_pattern'],s_schema).getItem('s').alias('browser_name_pattern').cast(StringType()),
-    from_json(df['browser_name_regex'],s_schema).getItem('s').alias('browser_name_regex').cast(StringType()),
-    from_json(df['campaign_key'],s_schema).getItem('s').alias('campaign_key').cast(StringType()),
-    from_json(df['client_time'],n_schema).getItem('n').alias('client_time').cast(LongType()),
-    from_json(df['comment'],s_schema).getItem('s').alias('comment').cast(StringType()),
-    from_json(df['created'],n_schema).getItem('n').alias('created').cast(DoubleType()),
-    from_json(df['device_pointing_method'],s_schema).getItem('s').alias('device_pointing_method').cast(StringType()),
-    from_json(df['device_type'],s_schema).getItem('s').alias('device_type').cast(StringType()),
-    from_json(df['geoip_city'],s_schema).getItem('s').alias('geoip_city').cast(StringType()),
-    from_json(df['geoip_continent_code'],s_schema).getItem('s').alias('geoip_continent_code').cast(StringType()),
-    from_json(df['geoip_country_code'],s_schema).getItem('s').alias('geoip_country_code').cast(StringType()),
-    from_json(df['geoip_isp'],s_schema).getItem('s').alias('geoip_isp').cast(StringType()),
-    from_json(df['geoip_postal_code'],s_schema).getItem('s').alias('geoip_postal_code').cast(StringType()),
-    from_json(df['geoip_region'],s_schema).getItem('s').alias('geoip_region').cast(StringType()),
-    from_json(df['http_Content-Length'],n_schema).getItem('n').alias('http_content_length').cast(IntegerType()),
-    from_json(df['http_User-Agent'],s_schema).getItem('s').alias('http_user_agent').cast(StringType()),
-    from_json(df['http_X-Forwarded-For'],s_schema).getItem('s').alias('http_x_forwarded_for').cast(StringType()),
-    from_json(df['is_mobile_device'],s_schema).getItem('s').alias('is_mobile_device').cast(StringType()),
-    from_json(df['major_version'],s_schema).getItem('s').alias('major_version').cast(StringType()),
-    from_json(df['minor_version'],s_schema).getItem('s').alias('minor_version').cast(StringType()),
-    from_json(df['page_id'],s_schema).getItem('s').alias('page_id').cast(StringType()),
-    from_json(df['parent'],s_schema).getItem('s').alias('parent').cast(StringType()),
-    from_json(df['platform'],s_schema).getItem('s').alias('platform').cast(StringType()),
-    from_json(df['sequence_number'],n_schema).getItem('n').alias('sequence_number').cast(IntegerType()),
-    from_json(df['token'],s_schema).getItem('s').alias('token').cast(StringType()),
-    from_json(df['version'],s_schema).getItem('s').alias('version').cast(StringType()),)
+    from_json(df['ip'], n_schema).getItem('n').alias('ip').cast(LongType()),
+    from_json(df['account_code'], s_schema).getItem('s').alias('account_code').cast(StringType()),
+    from_json(df['browser'], s_schema).getItem('s').alias('browser').cast(StringType()),
+    from_json(df['browser_maker'], s_schema).getItem('s').alias('browser_maker').cast(StringType()),
+    from_json(df['browser_name'], s_schema).getItem('s').alias('browser_name').cast(StringType()),
+    from_json(df['browser_name_pattern'], s_schema).getItem('s').alias('browser_name_pattern').cast(StringType()),
+    from_json(df['browser_name_regex'], s_schema).getItem('s').alias('browser_name_regex').cast(StringType()),
+    from_json(df['campaign_key'], s_schema).getItem('s').alias('campaign_key').cast(StringType()),
+    from_json(df['client_time'], n_schema).getItem('n').alias('client_time').cast(LongType()),
+    from_json(df['comment'], s_schema).getItem('s').alias('comment').cast(StringType()),
+    from_json(df['created'], n_schema).getItem('n').alias('created').cast(DoubleType()),
+    from_json(df['device_pointing_method'], s_schema).getItem('s').alias('device_pointing_method').cast(StringType()),
+    from_json(df['device_type'], s_schema).getItem('s').alias('device_type').cast(StringType()),
+    from_json(df['geoip_city'], s_schema).getItem('s').alias('geoip_city').cast(StringType()),
+    from_json(df['geoip_continent_code'], s_schema).getItem('s').alias('geoip_continent_code').cast(StringType()),
+    from_json(df['geoip_country_code'], s_schema).getItem('s').alias('geoip_country_code').cast(StringType()),
+    from_json(df['geoip_isp'], s_schema).getItem('s').alias('geoip_isp').cast(StringType()),
+    from_json(df['geoip_postal_code'], s_schema).getItem('s').alias('geoip_postal_code').cast(StringType()),
+    from_json(df['geoip_region'], s_schema).getItem('s').alias('geoip_region').cast(StringType()),
+    from_json(df['http_Content-Length'], n_schema).getItem('n').alias('http_content_length').cast(IntegerType()),
+    from_json(df['http_User-Agent'], s_schema).getItem('s').alias('http_user_agent').cast(StringType()),
+    from_json(df['http_X-Forwarded-For'], s_schema).getItem('s').alias('http_x_forwarded_for').cast(StringType()),
+    from_json(df['is_mobile_device'], s_schema).getItem('s').alias('is_mobile_device').cast(StringType()),
+    from_json(df['major_version'], s_schema).getItem('s').alias('major_version').cast(StringType()),
+    from_json(df['minor_version'], s_schema).getItem('s').alias('minor_version').cast(StringType()),
+    from_json(df['page_id'], s_schema).getItem('s').alias('page_id').cast(StringType()),
+    from_json(df['parent'], s_schema).getItem('s').alias('parent').cast(StringType()),
+    from_json(df['platform'], s_schema).getItem('s').alias('platform').cast(StringType()),
+    from_json(df['sequence_number'], n_schema).getItem('n').alias('sequence_number').cast(IntegerType()),
+    from_json(df['token'], s_schema).getItem('s').alias('token').cast(StringType()),
+    from_json(df['version'], s_schema).getItem('s').alias('version').cast(StringType()),)
 
 # add the job run columns
 df = df \

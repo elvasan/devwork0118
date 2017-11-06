@@ -16,6 +16,8 @@ pylint:
     function-rgx: "[a-z_][a-z0-9_]{2,50}$"
   disable:
     - misplaced-comparison-constant # Allow yoda conditions
+    - invalid-name  # Allow lower case top level names since these are procedural scripts
+    - logging-format-interpolation  # Allow logging functions to use .format()
 
 ignore-paths:
   - dist
