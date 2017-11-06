@@ -1,6 +1,7 @@
 import sys
 
 from pyspark.context import SparkContext
+
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
 from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
