@@ -13,7 +13,6 @@ stages:
 
 .deploy_template: &deploy_template
   stage: deploy
-  when: manual
   tags:
     - docker
   before_script:
@@ -41,3 +40,5 @@ deploy to dev:
     ENV: dev
   environment:
     name: dev
+  only:
+    - develop
