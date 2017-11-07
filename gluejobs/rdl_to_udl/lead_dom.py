@@ -34,7 +34,7 @@ lead_dom = glueContext.create_dynamic_frame.from_catalog(database=DB_NAME,
                                                          table_name=TBL_NAME,
                                                          transformation_ctx='lead_dom')
 
-df = lead_dom.doDF()
+df = lead_dom.toDF()
 
 keys = [
   'client_time',
