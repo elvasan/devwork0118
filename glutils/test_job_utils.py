@@ -1,6 +1,6 @@
 import unittest
 
-from .job_utils import code_format, zipped_b64_to_string
+from .job_utils import code_format, zipped_b64_to_string, get_dynamodb_value
 
 
 class TestJobUtilFunctions(unittest.TestCase):
@@ -24,6 +24,20 @@ class TestJobUtilFunctions(unittest.TestCase):
 
     def test_zipped_b64_to_string_works_with_nulls(self):
         self.assertIsNone(zipped_b64_to_string(None))
+
+    def test_get_dynamodb_value_works_with_nulls(self):
+        self.assertIsNone(get_dynamodb_value(None))
+
+# Test cases for DynamoDB Json values read
+    def test_get_dynamodb_value_works_with_dynamo_string(self):
+        initval = '{\"s\":\"A87D139E-74B1-0BCF-9188-73F369D69D24\"}'
+        expected = "A87D139E-74B1-0BCF-9188-73F369D69D24"
+        self.assertEqual(expected, get_dynamodb_value(initval))
+
+    def test_get_dynamodb_value_works_with_dynamo_string(self):
+        initval = '{"n":"1"}'
+        expected = '1'
+        self.assertEqual(expected, get_dynamodb_value(initval))
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,14 +1,17 @@
+# Entities Transformation from RDL to UDL
+
 import sys
 
 from pyspark.context import SparkContext
-from pyspark.sql.types import StringType, IntegerType
-from pyspark.sql.functions import col, from_json, current_timestamp, lit
+from pyspark.sql.types import StringType, IntegerType, TimestampType
+from pyspark.sql.functions import col, current_timestamp, lit, udf
+from pyspark.sql import functions as fun
 
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
 from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
 
-from glutils.job_objects import n_schema, s_schema
+from glutils.job_utils import get_dynamodb_value
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -29,7 +32,14 @@ output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(TBL_NAME)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
+
+# UDF To get the DynamoDB json value
+get_dynamodb_value_udf = udf(get_dynamodb_value, StringType())
+
 # Create data frame from the source tables
+# This needs to change so we directly read it from Glue's Catalog and not use Glue Libraries
+entities_rdl = glueContext.create_dynamic_frame.from_catalog(database="rdl", table_name="entities",
+                                                              transformation_ctx="entities").toDF()
 df = spark.read.parquet(source_dir)
 
 keys = ['active',
@@ -40,25 +50,28 @@ keys = ['active',
         'name']
 
 exprs = [col("item").getItem(k).alias(k) for k in keys]
-df = df.select(*exprs)
+entities = entities_rdl.select(*exprs)
 
 # TODO: generate the types from the DDL
-df = df.select(
-    from_json(df['active'], n_schema).getItem('n').alias('active').cast(IntegerType()),
-    from_json(df['code'], s_schema).getItem('s').alias('code').cast(StringType()),
-    from_json(df['created'], n_schema).getItem('n').alias('created').cast(IntegerType()),
-    from_json(df['industry'], n_schema).getItem('n').alias('industry').cast(IntegerType()),
-    from_json(df['modified'], n_schema).getItem('n').alias('modified').cast(IntegerType()),
-    from_json(df['name'], s_schema).getItem('s').alias('name').cast(StringType()),
+entities_extract = entities.select(
+    get_dynamodb_value_udf(entities['active']).alias('active').cast(IntegerType()),
+    get_dynamodb_value_udf(entities['code']).alias('code').cast(StringType()),
+    get_dynamodb_value_udf(entities['created']).alias('created').cast(IntegerType()),
+    get_dynamodb_value_udf(entities['industry']).alias('industry').cast(IntegerType()),
+    get_dynamodb_value_udf(entities['modified']).alias('modified').cast(IntegerType()),
+    get_dynamodb_value_udf(entities['name']).alias('name').cast(StringType()),
+    fun.from_unixtime(get_dynamodb_value_udf(entities['modified'])).alias('source_ts').cast(TimestampType())
 )
 
-df = df \
+
+# add the job run columns
+entities_df = entities_extract \
   .withColumn("insert_ts", current_timestamp()) \
   .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
   .withColumn("insert_batch_run_id", lit(1).cast(IntegerType()))
 
 # TODO: pass the write mode in as an arg
-df.write.parquet(output_dir,
+entities_df.write.parquet(output_dir,
                  mode='overwrite')
 
 job.commit()

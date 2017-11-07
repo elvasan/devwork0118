@@ -5,6 +5,7 @@ This module contains commonly used functions for the glue etl jobs.
 """
 import base64
 import zlib
+import json
 
 
 def zipped_b64_to_string(val):
@@ -16,3 +17,9 @@ def zipped_b64_to_string(val):
 def code_format(val):
     if val:
         return val.strip().replace(" ", "_").upper()
+
+
+# UDF to read DynamoDB Json values directly
+def get_dynamodb_value(dynamodb_string):
+    if dynamodb_string:
+        return list(json.loads(dynamodb_string).values())[0]
