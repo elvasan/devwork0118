@@ -20,17 +20,21 @@ job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
 # define catalog source
+DB_NAME = 'udl'
 TBL_NAME = 'lead_dom'
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
-source_dir = "s3://jornaya-dev-us-east-1-rdl/{}".format(TBL_NAME)
 output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(TBL_NAME)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
 # Create data frame from the source tables
-df = spark.read.parquet(source_dir)
+lead_dom = glueContext.create_dynamic_frame.from_catalog(database=DB_NAME,
+                                                         table_name=TBL_NAME,
+                                                         transformation_ctx='lead_dom')
+
+df = lead_dom.doDF()
 
 keys = [
   'client_time',
@@ -54,8 +58,6 @@ keys = [
   'sessionStorage',
   'token',
   'tz',
-  'WebSocket',
-
 ]
 
 exprs = [col("item").getItem(k).alias(k) for k in keys]
@@ -71,20 +73,19 @@ df = df.select(
     from_json(df['http_Content-Length'], n_schema).getItem('n').alias('http_content_length').cast(IntegerType()),
     from_json(df['http_User-Agent'], s_schema).getItem('s').alias('http_user_agent').cast(StringType()),
     from_json(df['http_X_Forwarded_For'], s_schema).getItem('s').alias('http_x_forwarded_for').cast(StringType()),
-    from_json(df['localStorage'], s_schema).getItem('s').alias('localStorage').cast(BooleanType()),
-    from_json(df['navigator\\appCodeName'], s_schema).getItem('s').alias('navigator_appcodename').cast(StringType()),
+    from_json(df['localStorage'], s_schema).getItem('s').alias('local_Storage').cast(BooleanType()),
+    from_json(df['navigator\\appCodeName'], s_schema).getItem('s').alias('navigator_app_code_name').cast(StringType()),
     from_json(df['navigator\\language'], s_schema).getItem('s').alias('navigator_language').cast(StringType()),
     from_json(df['navigator\\platform'], s_schema).getItem('s').alias('navigator_platform').cast(StringType()),
-    from_json(df['navigator\\productSub'], s_schema).getItem('s').alias('navigator_productSub').cast(StringType()),
-    from_json(df['navigator\\userAgent'], s_schema).getItem('s').alias('navigator_userAgent').cast(StringType()),
+    from_json(df['navigator\\productSub'], s_schema).getItem('s').alias('navigator_product_sub').cast(StringType()),
+    from_json(df['navigator\\userAgent'], s_schema).getItem('s').alias('navigator_user_agent').cast(StringType()),
     from_json(df['page_id'], s_schema).getItem('s').alias('page_id').cast(StringType()),
     from_json(df['screen\\height'], s_schema).getItem('s').alias('screen_height').cast(IntegerType()),
     from_json(df['screen\\width'], s_schema).getItem('s').alias('screen_width').cast(IntegerType()),
     from_json(df['sequence_number'], n_schema).getItem('n').alias('sequence_number').cast(IntegerType()),
-    from_json(df['sessionStorage'], s_schema).getItem('s').alias('sessionStorage').cast(BooleanType()),
+    from_json(df['sessionStorage'], s_schema).getItem('s').alias('session_storage').cast(BooleanType()),
     from_json(df['token'], s_schema).getItem('s').alias('token').cast(StringType()),
     from_json(df['tz'], s_schema).getItem('s').alias('tz').cast(ShortType()),
-    from_json(df['WebSocket'], s_schema).getItem('s').alias('WebSocket').cast(BooleanType()),
 )
 
 df = df \
