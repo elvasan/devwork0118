@@ -255,3 +255,12 @@ awsglue/
 metastore_db/
 *.ipynb
 src_data/
+/.idea/leads-etl.iml
+/.idea/misc.xml
+.idea/leads-etl.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+/.idea/modules.xml
+/.idea/vcs.xml
+/.idea/workspace.xml

@@ -1,14 +1,18 @@
+# Accounts Transformation from RDL to UDL
+
 import sys
 
+
 from pyspark.context import SparkContext
-from pyspark.sql.types import StringType, IntegerType
-from pyspark.sql.functions import col, from_json, current_timestamp, lit
+from pyspark.sql.types import StringType, IntegerType, DoubleType, TimestampType
+from pyspark.sql.functions import col, current_timestamp, lit, udf
+from pyspark.sql import functions as fun
 
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
 from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
 
-from glutils.job_objects import n_schema, s_schema
+from glutils.job_utils import get_dynamodb_value
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -29,8 +33,15 @@ output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(TBL_NAME)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
-# Create data frame from the source tables
-df = spark.read.parquet(source_dir)
+
+# UDF to get the DynamoDB json value
+get_dynamodb_value_udf = udf(get_dynamodb_value, StringType())
+
+# Read in the accounts table into an Dataframe
+# This needs to change so we directly read it from Glue's Catalog and not use Glue Libraries
+accounts_rdl = glueContext.create_dynamic_frame.from_catalog(database="rdl", table_name="accounts",
+                                                              transformation_ctx="accounts").toDF()
+#accounts_rdl = spark.read.parquet(source_dir)
 
 keys = ['active',
         'affiliate_click_network',
@@ -64,49 +75,49 @@ keys = ['active',
         ]
 
 exprs = [col("item").getItem(k).alias(k) for k in keys]
-df = df.select(*exprs)
+accounts = accounts_rdl.select(*exprs)
 
 # TODO: generate the types from the DDL
-df = df.select(
-    from_json(df['active'], n_schema).getItem('n').alias('active').cast(IntegerType()),
-    from_json(df['affiliate_click_network'],
-              n_schema).getItem('n').alias('affiliate_click_network').cast(IntegerType()),
-    from_json(df['api_key'], s_schema).getItem('s').alias('api_key').cast(StringType()),
-    from_json(df['audit_auth'], n_schema).getItem('n').alias('audit_auth').cast(IntegerType()),
-    from_json(df['audit_full'], n_schema).getItem('n').alias('audit_full').cast(IntegerType()),
-    from_json(df['audit_pre'], n_schema).getItem('n').alias('audit_pre').cast(IntegerType()),
-    from_json(df['audit_self'], n_schema).getItem('n').alias('audit_self').cast(IntegerType()),
-    from_json(df['call_center'], n_schema).getItem('n').alias('call_center').cast(IntegerType()),
-    from_json(df['code'], s_schema).getItem('s').alias('code').cast(StringType()),
-    from_json(df['contribute'], n_schema).getItem('n').alias('contribute').cast(IntegerType()),
-    from_json(df['create'], n_schema).getItem('n').alias('create').cast(IntegerType()),
-    from_json(df['created'], n_schema).getItem('n').alias('created').cast(IntegerType()),
-    from_json(df['email'], s_schema).getItem('s').alias('email').cast(StringType()),
-    from_json(df['entity_code'], s_schema).getItem('s').alias('entity_code').cast(StringType()),
-    from_json(df['industry'], n_schema).getItem('n').alias('industry').cast(IntegerType()),
-    from_json(df['lead_aggregator'], n_schema).getItem('n').alias('lead_aggregator').cast(IntegerType()),
-    from_json(df['lead_originator'], n_schema).getItem('n').alias('lead_originator').cast(IntegerType()),
-    from_json(df['legal_agreed'], n_schema).getItem('n').alias('legal_agreed').cast(IntegerType()),
-    from_json(df['legal_agreed_date'], n_schema).getItem('n').alias('legal_agreed_date').cast(IntegerType()),
-    from_json(df['logging'], n_schema).getItem('n').alias('logging').cast(IntegerType()),
-    from_json(df['marketplace'], n_schema).getItem('n').alias('marketplace').cast(IntegerType()),
-    from_json(df['mobile_network'], n_schema).getItem('n').alias('mobile_network').cast(IntegerType()),
-    from_json(df['modified'], n_schema).getItem('n').alias('modified').cast(IntegerType()),
-    from_json(df['name'], s_schema).getItem('s').alias('name').cast(StringType()),
-    from_json(df['referral_source'], s_schema).getItem('s').alias('referral_source').cast(StringType()),
-    from_json(df['role'], s_schema).getItem('s').alias('role').cast(IntegerType()),
-    from_json(df['status'], n_schema).getItem('n').alias('status').cast(IntegerType()),
-    from_json(df['testing'], n_schema).getItem('n').alias('testing').cast(IntegerType()),
-    from_json(df['website'], s_schema).getItem('s').alias('website').cast(StringType()))
+accounts_extract = accounts.select(get_dynamodb_value_udf(accounts['active']).alias('active').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['affiliate_click_network']).alias('affiliate_click_network').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['api_key']).alias('api_key').cast(StringType()),
+    get_dynamodb_value_udf(accounts['audit_auth']).alias('audit_auth').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['audit_full']).alias('audit_full').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['audit_pre']).alias('audit_pre').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['audit_self']).alias('audit_self').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['call_center']).alias('call_center').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['code']).alias('code').cast(StringType()),
+    get_dynamodb_value_udf(accounts['contribute']).alias('contribute').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['create']).alias('create').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['created']).alias('created').cast(DoubleType()),
+    get_dynamodb_value_udf(accounts['email']).alias('email').cast(StringType()),
+    get_dynamodb_value_udf(accounts['entity_code']).alias('entity_code').cast(StringType()),
+    get_dynamodb_value_udf(accounts['industry']).alias('industry').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['lead_aggregator']).alias('lead_aggregator').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['lead_originator']).alias('lead_originator').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['legal_agreed']).alias('legal_agreed').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['legal_agreed_date']).alias('legal_agreed_date').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['logging']).alias('logging').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['marketplace']).alias('marketplace').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['mobile_network']).alias('mobile_network').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['modified']).alias('modified').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['name']).alias('name').cast(StringType()),
+    get_dynamodb_value_udf(accounts['referral_source']).alias('referral_source').cast(StringType()),
+    get_dynamodb_value_udf(accounts['role']).alias('role').cast(StringType()),
+    get_dynamodb_value_udf(accounts['status']).alias('status').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['testing']).alias('testing').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['website']).alias('website').cast(StringType()),
+    fun.from_unixtime(get_dynamodb_value_udf(accounts['modified'])).alias('source_ts').cast(TimestampType())
+    )
 
 # add the job run columns
-df = df \
+accounts_df = accounts_extract \
   .withColumn("insert_ts", current_timestamp()) \
   .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
   .withColumn("insert_batch_run_id", lit(1).cast(IntegerType()))
 
 # TODO: pass the write mode in as an arg
-df.write.parquet(output_dir,
+accounts_df.write.parquet(output_dir,
                  mode='overwrite')
 
 job.commit()
