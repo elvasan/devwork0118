@@ -72,7 +72,7 @@ df = df.select(
     from_json(df['flash_version'], s_schema).getItem('s').alias('flash_version').cast(StringType()),
     from_json(df['http_Content-Length'], n_schema).getItem('n').alias('http_content_length').cast(IntegerType()),
     from_json(df['http_User-Agent'], s_schema).getItem('s').alias('http_user_agent').cast(StringType()),
-    from_json(df['http_X_Forwarded_For'], s_schema).getItem('s').alias('http_x_forwarded_for').cast(StringType()),
+    from_json(df['http_X-Forwarded-For'], s_schema).getItem('s').alias('http_x_forwarded_for').cast(StringType()),
     from_json(df['localStorage'], s_schema).getItem('s').alias('local_Storage').cast(BooleanType()),
     from_json(df['navigator\\appCodeName'], s_schema).getItem('s').alias('navigator_app_code_name').cast(StringType()),
     from_json(df['navigator\\language'], s_schema).getItem('s').alias('navigator_language').cast(StringType()),
