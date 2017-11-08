@@ -1,7 +1,7 @@
 import sys
 
 from pyspark.context import SparkContext
-from pyspark.sql.types import StringType, IntegerType
+from pyspark.sql.types import StringType, IntegerType, DoubleType
 from pyspark.sql.functions import col, from_json, current_timestamp, lit
 
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
@@ -58,7 +58,7 @@ df = df.select(from_json(df['account_code'], s_schema).getItem('s').alias('accou
                from_json(df['audience_id_tags'], sS_schema).getItem('sS').alias('audience_id_tags').cast(StringType()),
                from_json(df['campaign_javascript_version'],
                          s_schema).getItem('s').alias('campaign_javascript_version').cast(StringType()),
-               from_json(df['created'], n_schema).getItem('n').alias('created').cast(IntegerType()),
+               from_json(df['created'], n_schema).getItem('n').alias('created').cast(DoubleType()),
                from_json(df['created_by'], n_schema).getItem('n').alias('created_by').cast(IntegerType()),
                from_json(df['description'], s_schema).getItem('s').alias('description').cast(StringType()),
                from_json(df['forensiq_default'], n_schema).getItem('n').alias('forensiq_default').cast(IntegerType()),
@@ -67,7 +67,7 @@ df = df.select(from_json(df['account_code'], s_schema).getItem('s').alias('accou
                from_json(df['log_level'], n_schema).getItem('n').alias('log_level').cast(IntegerType()),
                from_json(df['log_limit'], n_schema).getItem('n').alias('log_limit').cast(IntegerType()),
                from_json(df['log_targets'], n_schema).getItem('n').alias('log_targets').cast(IntegerType()),
-               from_json(df['modified'], n_schema).getItem('n').alias('modified').cast(IntegerType()),
+               from_json(df['modified'], n_schema).getItem('n').alias('modified').cast(DoubleType()),
                from_json(df['modified_by'], n_schema).getItem('n').alias('modified_by').cast(IntegerType()),
                from_json(df['name'], s_schema).getItem('s').alias('name').cast(StringType()),
                from_json(df['threatmetrix_default'],
