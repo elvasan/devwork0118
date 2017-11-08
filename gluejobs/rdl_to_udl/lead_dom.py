@@ -20,7 +20,7 @@ job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
 # define catalog source
-DB_NAME = 'udl'
+DB_NAME = 'rdl'
 TBL_NAME = 'lead_dom'
 
 # output directories
