@@ -79,7 +79,7 @@ df = df.select(
     from_json(df['browser_name_pattern'], s_schema).getItem('s').alias('browser_name_pattern').cast(StringType()),
     from_json(df['browser_name_regex'], s_schema).getItem('s').alias('browser_name_regex').cast(StringType()),
     from_json(df['campaign_key'], s_schema).getItem('s').alias('campaign_key').cast(StringType()),
-    from_json(df['client_time'], n_schema).getItem('n').alias('client_time').cast(LongType()),
+    from_json(df['client_time'], n_schema).getItem('n').alias('client_time').cast(DoubleType()),
     from_json(df['comment'], s_schema).getItem('s').alias('comment').cast(StringType()),
     from_json(df['created'], n_schema).getItem('n').alias('created').cast(DoubleType()),
     from_json(df['device_pointing_method'], s_schema).getItem('s').alias('device_pointing_method').cast(StringType()),

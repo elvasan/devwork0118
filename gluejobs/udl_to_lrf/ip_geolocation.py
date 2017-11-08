@@ -45,6 +45,10 @@ ip_geo_leads = leads_udl_df.select(
 code_ref_tbl = "code_ref"
 code_ref_udl_df = spark.read.parquet("s3://jornaya-dev-us-east-1-udl/{}".format(code_ref_tbl))
 
+# Assign -1 to all empty value
+ip_geo_leads = ip_geo_leads.replace([' ', ''], '-1', 'geoip_country_code').alias('geoip_country_code')
+ip_geo_leads = ip_geo_leads.replace([' ', ''], '-1', 'geoip_region').alias('geoip_region')
+
 # Create DataFrame of CODE_REF - country table
 countries_codes = code_ref_udl_df.select(
     col('value_cd').alias('c_value_cd'),
@@ -70,8 +74,8 @@ result_table = ip_geo_leads.alias('l') \
     ((upper(col('r_code_desc')) == upper(col('geoip_region'))) & (col('r_value_cd') == col('c_value_cd'))),
     'left_outer') \
   .select(
-    coalesce(col('r_code_ref_key'), lit('-1')).alias('region_cd'),
-    coalesce(col('c_code_ref_key'), lit('-1')).alias('country_cd'),
+    coalesce(col('c_value_cd'), lit('-2')).alias('country_cd'),
+    coalesce(col('r_code_desc'), lit('-2')).alias('region_cd'),
     col('l.geoip_city').alias('city_nm'),
     col("geoip_postal_code").alias('postal_cd'),
     col("geoip_isp").alias('isp_nm'),

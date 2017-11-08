@@ -1,6 +1,8 @@
 import sys
 
 from pyspark.context import SparkContext
+from pyspark.sql.functions import from_unixtime, col
+from pyspark.sql.types import TimestampType
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
 from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
@@ -44,7 +46,24 @@ ip_geolocation_tbl_fdl_df = ip_geolocation_tbl_lrf_df.select(
     "source_ts",
 )
 
+df = ip_geolocation_tbl_fdl_df.withColumn('source_ts_date',
+                                          from_unixtime(
+                                              ip_geolocation_tbl_fdl_df.source_ts,
+                                              'yyyy-MM-dd HH:mm:ss').cast(TimestampType())
+                                          )
+ip_geolocation_fdl_df = df.select(
+    col("ip_geolocation_key"),
+    col("country_cd"),
+    col("region_cd"),
+    col("city_nm"),
+    col("postal_cd"),
+    col("isp_nm"),
+    col("insert_ts"),
+    col("insert_batch_run_id"),
+    col("insert_job_run_id"),
+    col("source_ts_date").alias("source_ts"),
+)
 # write hash_mapping to fdl
-ip_geolocation_tbl_fdl_df.write.parquet(output_dir, mode='overwrite')
+ip_geolocation_fdl_df.write.parquet(output_dir, mode='overwrite')
 
 job.commit()
