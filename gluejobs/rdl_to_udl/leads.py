@@ -93,7 +93,7 @@ df = df.select(
     from_json(df['http_Content-Length'], n_schema).getItem('n').alias('http_content_length').cast(IntegerType()),
     from_json(df['http_User-Agent'], s_schema).getItem('s').alias('http_user_agent').cast(StringType()),
     from_json(df['http_X-Forwarded-For'], s_schema).getItem('s').alias('http_x_forwarded_for').cast(StringType()),
-    from_json(df['isMobileDevice'], s_schema).getItem('s').alias('is_mobile_device').cast(StringType()),
+    from_json(df['isMobileDevice'], n_schema).getItem('n').alias('is_mobile_device').cast(IntegerType()),
     from_json(df['MajorVer'], s_schema).getItem('s').alias('major_ver').cast(StringType()),
     from_json(df['MinorVer'], s_schema).getItem('s').alias('minor_ver').cast(StringType()),
     from_json(df['page_id'], s_schema).getItem('s').alias('page_id').cast(StringType()),
