@@ -1,7 +1,7 @@
 # Company transformation from UDL to LRF
 import sys
 from pyspark.context import SparkContext
-from pyspark.sql import functions as fun
+from pyspark.sql.functions import current_timestamp, lit, coalesce, concat, md5, when, from_unixtime
 from pyspark.sql.types import BooleanType, StringType, TimestampType, IntegerType
 
 from awsglue.utils import getResolvedOptions # pylint: disable=import-error
@@ -45,31 +45,32 @@ entities = glueContext.create_dynamic_frame.from_catalog(database="{}".format(db
                                                          transformation_ctx="{}".format(source2_tbl)).toDF()
 
 # Variable declaration
-dflt = 'unknown'
-curr_tmstp = fun.current_timestamp()
+curr_tmstp = current_timestamp()
+
 
 # Transformations for company table to lrf
 company_extract = entities \
-  .join(
+    .join(
     accounts, entities.code == accounts.entity_code, 'right_outer') \
-  .select(
-    fun.md5(fun.concat(accounts.code, fun.from_unixtime(accounts.modified, format='yyyy/MM/dd HH:mm:ss')))
-    .alias('account_key').cast(StringType()),
+    .select(
+    md5(concat(accounts.code, from_unixtime(accounts.modified))).alias('account_key').cast(StringType()),
     accounts.code.alias('account_id'),
-    accounts.source_ts.alias('source_mod_ts'),
-    fun.when(entities.name != ' ', entities.name).otherwise(accounts.name).alias('company_nm'),
+    when((accounts.modified).isNull() & (accounts.created).isNull(), '9999-12-31 23:59:59.999999')
+        .otherwise(coalesce(from_unixtime(accounts.modified), from_unixtime(accounts.created)))
+        .cast(TimestampType()).alias('source_mod_ts'),
+    when(entities.name != ' ', entities.name).otherwise(accounts.name).alias('company_nm'),
     accounts.entity_code.alias('entity_id'),
-    fun.when(accounts.active == 1, accounts.active).otherwise(0).alias('is_active_ind').cast(BooleanType()),
-    fun.when(accounts.role == ' ', dflt).otherwise(dflt).alias('role_nm'),
+    when(accounts.active == 1, accounts.active).otherwise(0).alias('is_active_ind').cast(BooleanType()),
+    accounts.role.alias('role_nm'),
     curr_tmstp.alias('insert_ts').cast(TimestampType()),
     accounts.source_ts
-  )
+)
 
 # The below transformation should be updated once we have ABC fully ready
 company_fnl = company_extract \
-    .withColumn("insert_job_run_id", fun.lit(-1).cast(IntegerType())) \
-    .withColumn("insert_batch_run_id", fun.lit(-1).cast(IntegerType())) \
-    .withColumn("load_action_ind", fun.lit('i').cast(StringType()))
+    .withColumn("insert_job_run_id", lit(-1).cast(IntegerType())) \
+    .withColumn("insert_batch_run_id", lit(-1).cast(IntegerType())) \
+    .withColumn("load_action_ind", lit('i').cast(StringType()))
 
 company_fnl.write.parquet(output_dir, mode='overwrite')
 
