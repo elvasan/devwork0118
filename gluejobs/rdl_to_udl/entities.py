@@ -3,7 +3,7 @@
 import sys
 
 from pyspark.context import SparkContext
-from pyspark.sql.types import StringType, IntegerType, TimestampType
+from pyspark.sql.types import StringType, IntegerType, TimestampType, DoubleType
 from pyspark.sql.functions import col, current_timestamp, lit, udf
 from pyspark.sql import functions as fun
 
@@ -56,9 +56,9 @@ entities = entities_rdl.select(*exprs)
 entities_extract = entities.select(
     get_dynamodb_value_udf(entities['active']).alias('active').cast(IntegerType()),
     get_dynamodb_value_udf(entities['code']).alias('code').cast(StringType()),
-    get_dynamodb_value_udf(entities['created']).alias('created').cast(IntegerType()),
+    get_dynamodb_value_udf(entities['created']).alias('created').cast(DoubleType()),
     get_dynamodb_value_udf(entities['industry']).alias('industry').cast(IntegerType()),
-    get_dynamodb_value_udf(entities['modified']).alias('modified').cast(IntegerType()),
+    get_dynamodb_value_udf(entities['modified']).alias('modified').cast(DoubleType()),
     get_dynamodb_value_udf(entities['name']).alias('name').cast(StringType()),
     fun.from_unixtime(get_dynamodb_value_udf(entities['modified'])).alias('source_ts').cast(TimestampType())
 )

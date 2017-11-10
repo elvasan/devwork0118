@@ -100,7 +100,7 @@ accounts_extract = accounts.select(get_dynamodb_value_udf(accounts['active']).al
     get_dynamodb_value_udf(accounts['logging']).alias('logging').cast(IntegerType()),
     get_dynamodb_value_udf(accounts['marketplace']).alias('marketplace').cast(IntegerType()),
     get_dynamodb_value_udf(accounts['mobile_network']).alias('mobile_network').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['modified']).alias('modified').cast(IntegerType()),
+    get_dynamodb_value_udf(accounts['modified']).alias('modified').cast(DoubleType()),
     get_dynamodb_value_udf(accounts['name']).alias('name').cast(StringType()),
     get_dynamodb_value_udf(accounts['referral_source']).alias('referral_source').cast(StringType()),
     get_dynamodb_value_udf(accounts['role']).alias('role').cast(StringType()),
