@@ -53,7 +53,7 @@ company_extract = entities \
     .join(
     accounts, entities.code == accounts.entity_code, 'right_outer') \
     .select(
-    md5(concat(accounts.code, from_unixtime(accounts.modified))).alias('account_key').cast(StringType()),
+    md5(concat(accounts.code, '|', from_unixtime(accounts.modified))).alias('account_key').cast(StringType()),
     accounts.code.alias('account_id'),
     when((accounts.modified).isNull() & (accounts.created).isNull(), '9999-12-31 23:59:59.999999')
         .otherwise(coalesce(from_unixtime(accounts.modified), from_unixtime(accounts.created)))
@@ -70,7 +70,7 @@ company_extract = entities \
 company_fnl = company_extract \
     .withColumn("insert_job_run_id", lit(-1).cast(IntegerType())) \
     .withColumn("insert_batch_run_id", lit(-1).cast(IntegerType())) \
-    .withColumn("load_action_ind", lit('i').cast(StringType()))
+    .withColumn("load_action_cd", lit('i').cast(StringType()))
 
 company_fnl.write.parquet(output_dir, mode='overwrite')
 
