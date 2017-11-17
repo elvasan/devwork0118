@@ -42,24 +42,10 @@ SRCDATA = GLUE_CONTEXT.create_dynamic_frame.from_catalog(database=SOURCE_DB_NAME
                                                          transformation_ctx='srcdata')
 
 ## @type: ApplyMapping
-## @args: [mapping = [("ip_geolocation_key", "string", "ip_geolocation_key", "string"),
-## ("country_cd", "string", "country_cd", "string"),
-## ("region_cd", "string", "region_cd", "string"),
-## ("city_nm", "string", "city_nm", "string"),
-## ("postal_cd", "string", "postal_cd", "string"),
-## ("isp_nm", "string", "isp_nm", "string"),
-##
-## ("insert_ts", "timestamp", "insert_ts", "timestamp"),
-## ("insert_job_run_id", "int", "insert_job_run_id", "int"),
-## ("insert_batch_run_id", "int", "insert_batch_run_id", "int"),
-## ("source_ts", "timestamp", "source_ts", "timestamp")]
-## @return: applymapping1
-## @inputs: [frame = datasource0]
 APPLY_MAPPING = ApplyMapping.apply(frame=SRCDATA,
                                    mappings=[("campaign_key", "string", "campaign_key", "string"),
                                              ("campaign_nm", "string", "campaign_nm", "string"),
                                              ("campaign_desc", "string", "campaign_desc", "string"),
-                                             ("industry_nm", "string", "industry_nm", "string"),
                                              ("account_id", "string", "account_id", "string"),
 
                                              ("insert_ts", "timestamp", "insert_ts", "timestamp"),
@@ -71,7 +57,6 @@ APPLY_MAPPING = ApplyMapping.apply(frame=SRCDATA,
 SELECT_FIELDS = APPLY_MAPPING.select_fields(["campaign_key",
                                              "campaign_nm",
                                              "campaign_desc",
-                                             "industry_nm",
                                              "account_id",
 
                                              "insert_ts",

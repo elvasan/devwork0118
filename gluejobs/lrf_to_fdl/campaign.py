@@ -39,7 +39,6 @@ campaign_fdl_df = campaign_lrf_df.select(
     campaign_lrf_df.campaign_key,
     campaign_lrf_df.campaign_nm,
     campaign_lrf_df.campaign_desc,
-    campaign_lrf_df.industry_nm,
     campaign_lrf_df.account_id,
     campaign_lrf_df.insert_ts,
     campaign_lrf_df.insert_batch_run_id,
