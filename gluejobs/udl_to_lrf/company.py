@@ -72,6 +72,8 @@ company_fnl = company_extract \
     .withColumn("insert_batch_run_id", lit(-1).cast(IntegerType())) \
     .withColumn("load_action_cd", lit('i').cast(StringType()))
 
-company_fnl.write.parquet(output_dir, mode='overwrite')
+company_fnl.write.parquet(output_dir,
+                          mode='overwrite',
+                          compression='snappy')
 
 job.commit()

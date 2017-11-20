@@ -43,6 +43,8 @@ hash_mapping_tbl_fdl_df = hash_mapping_tbl_lrf_df.select(
 )
 
 # write hash_mapping to fdl
-hash_mapping_tbl_fdl_df.write.parquet(output_dir, mode='overwrite')
+hash_mapping_tbl_fdl_df.write.parquet(output_dir,
+                                      mode='overwrite',
+                                      compression='snappy')
 
 job.commit()

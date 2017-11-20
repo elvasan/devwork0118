@@ -41,6 +41,7 @@ df = df \
   .withColumn("load_action_ind", lit('i').cast(StringType()))
 
 df.write.parquet(output_dir,
-                 mode='overwrite')
+                 mode='overwrite',
+                 compression='snappy')
 
 job.commit()

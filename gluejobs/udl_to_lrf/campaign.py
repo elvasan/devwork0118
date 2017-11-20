@@ -53,6 +53,8 @@ campaigns_udl_lrf_selected_fields = campaigns_udl_lrf_formatted \
   .select('account_id', 'campaign_desc', 'campaign_key', 'campaign_nm', 'source_ts', 'insert_ts', 'insert_job_run_id',
           'insert_batch_run_id', 'load_action_ind')
 
-campaigns_udl_lrf_selected_fields.write.parquet(output_dir, mode='overwrite')
+campaigns_udl_lrf_selected_fields.write.parquet(output_dir,
+                                                mode='overwrite',
+                                                compression='snappy')
 
 job.commit()

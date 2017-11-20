@@ -99,6 +99,8 @@ ip_geolocation_with_key_df = result_table \
 
 ip_geolocation_with_deduped_key_df = ip_geolocation_with_key_df.dropDuplicates(['ip_geolocation_key'])
 
-ip_geolocation_with_deduped_key_df.write.parquet(output_dir, mode='overwrite')
+ip_geolocation_with_deduped_key_df.write.parquet(output_dir,
+                                                 mode='overwrite',
+                                                 compression='snappy')
 
 job.commit()

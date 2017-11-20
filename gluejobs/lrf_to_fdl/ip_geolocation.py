@@ -64,6 +64,8 @@ ip_geolocation_fdl_df = df.select(
     col("source_ts_date").alias("source_ts"),
 )
 # write hash_mapping to fdl
-ip_geolocation_fdl_df.write.parquet(output_dir, mode='overwrite')
+ip_geolocation_fdl_df.write.parquet(output_dir,
+                                    mode='overwrite',
+                                    compression='snappy')
 
 job.commit()

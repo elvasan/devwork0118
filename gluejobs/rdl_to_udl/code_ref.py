@@ -45,6 +45,7 @@ df = df \
 
 # TODO: pass the write mode in as an arg
 df.write.parquet(output_dir,
-                 mode='overwrite')
+                 mode='overwrite',
+                 compression='snappy')
 
 job.commit()
