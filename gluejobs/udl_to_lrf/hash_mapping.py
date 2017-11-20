@@ -55,6 +55,8 @@ join_with_jobs_df = join_df \
   .withColumn("insert_batch_run_id", lit(1).cast(IntegerType())) \
   .withColumn("load_action_ind", lit('i').cast(StringType()))
 
-join_with_jobs_df.write.parquet(output_dir, mode='overwrite')
+join_with_jobs_df.write.parquet(output_dir,
+                                mode='overwrite',
+                                compression='snappy')
 
 job.commit()

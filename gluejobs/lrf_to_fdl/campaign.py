@@ -48,6 +48,8 @@ campaign_fdl_df = campaign_lrf_df.select(
 )
 
 # write company table values to fdl
-campaign_fdl_df.write.parquet(output_dir, mode='overwrite')
+campaign_fdl_df.write.parquet(output_dir,
+                              mode='overwrite',
+                              compression='snappy')
 
 job.commit()

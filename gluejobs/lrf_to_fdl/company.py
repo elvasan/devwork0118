@@ -52,6 +52,8 @@ company_fdl_df = company_lrf_df.select(
 )
 
 # write company table values to fdl
-company_fdl_df.write.parquet(output_dir, mode='overwrite')
+company_fdl_df.write.parquet(output_dir,
+                             mode='overwrite',
+                             compression='snappy')
 
 job.commit()
