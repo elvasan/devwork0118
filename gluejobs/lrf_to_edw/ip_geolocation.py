@@ -7,13 +7,12 @@ To: EDW
 import sys
 
 from pyspark.context import SparkContext
-from pyspark.sql.functions import from_unixtime
-from pyspark.sql.types import TimestampType
+
 from awsglue.transforms import ApplyMapping # pylint: disable=import-error
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
 from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
-from awsglue.dynamicframe import DynamicFrame # pylint: disable=import-error
+
 
 ARGS = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -43,15 +42,6 @@ TEMP_DIR = "s3://jornaya-dev-us-east-1-tmp/{}".format(ARGS['JOB_NAME'])
 SRCDATA = GLUE_CONTEXT.create_dynamic_frame.from_catalog(database=SOURCE_DB_NAME,
                                                          table_name=SOURCE_TABLE,
                                                          transformation_ctx='srcdata')
-SRC_DF = SRCDATA.toDF()
-DF = SRC_DF.withColumn('source_ts_date',
-                       from_unixtime(
-                           SRC_DF.source_ts,
-                           'yyyy-MM-dd HH:mm:ss').cast(TimestampType())
-                       )
-# Convert back to a DynamicFrame for further processing.
-PREP_DATA = DynamicFrame.fromDF(DF, GLUE_CONTEXT, "customDF_df")
-
 
 ## @type: ApplyMapping
 ## @args: [mapping = [("ip_geolocation_key", "string", "ip_geolocation_key", "string"),
@@ -67,7 +57,7 @@ PREP_DATA = DynamicFrame.fromDF(DF, GLUE_CONTEXT, "customDF_df")
 ## ("source_ts", "timestamp", "source_ts", "timestamp")]
 ## @return: applymapping1
 ## @inputs: [frame = datasource0]
-APPLY_MAPPING = ApplyMapping.apply(frame=PREP_DATA,
+APPLY_MAPPING = ApplyMapping.apply(frame=SRCDATA,
                                    mappings=[("ip_geolocation_key", "string", "ip_geolocation_key", "string"),
                                              ("country_cd", "string", "country_cd", "string"),
                                              ("region_cd", "string", "region_cd", "string"),
@@ -78,7 +68,7 @@ APPLY_MAPPING = ApplyMapping.apply(frame=PREP_DATA,
                                              ("insert_ts", "timestamp", "insert_ts", "timestamp"),
                                              ("insert_job_run_id", "int", "insert_job_run_id", "int"),
                                              ("insert_batch_run_id", "int", "insert_batch_run_id", "int"),
-                                             ("source_ts_date", "timestamp", "source_ts", "timestamp")],
+                                             ("source_ts", "timestamp", "source_ts", "timestamp")],
                                    transformation_ctx="applymapping1")
 
 SELECT_FIELDS = APPLY_MAPPING.select_fields(["ip_geolocation_key",
