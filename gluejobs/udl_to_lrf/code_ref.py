@@ -35,10 +35,10 @@ code_ref = glueContext.create_dynamic_frame.from_catalog(database=db_name,
 df = code_ref.toDF()
 
 df = df \
-  .withColumn("insert_ts", current_timestamp()) \
-  .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
-  .withColumn("insert_batch_run_id", lit(1).cast(IntegerType())) \
-  .withColumn("load_action_ind", lit('i').cast(StringType()))
+    .withColumn("insert_ts", current_timestamp()) \
+    .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
+    .withColumn("insert_batch_run_id", lit(1).cast(IntegerType())) \
+    .withColumn("load_action_ind", lit('i').cast(StringType()))
 
 df.write.parquet(output_dir,
                  mode='overwrite',

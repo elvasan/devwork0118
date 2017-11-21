@@ -23,13 +23,15 @@ source_db_name = "lrf"
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
-source_dir = "s3://jornaya-dev-us-east-1-{}/{}".format(source_db_name, source_tbl)
 output_dir = "s3://jornaya-dev-us-east-1-{}/{}".format(db_name, tbl_name)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
 # pii_hashing udl
-hash_mapping_tbl_lrf_df = spark.read.parquet(source_dir)
+hash_mapping_tbl_lrf_df = glueContext.create_dynamic_frame.from_catalog(database="{}".format(source_db_name),
+                                                                        table_name="{}".format(source_tbl),
+                                                                        transformation_ctx="{}".format(
+                                                                            source_tbl)).toDF()
 
 # TODO: HERE will be select based on date_time range
 hash_mapping_tbl_fdl_df = hash_mapping_tbl_lrf_df.select(

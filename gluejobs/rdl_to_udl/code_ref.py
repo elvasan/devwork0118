@@ -24,28 +24,32 @@ TBL_NAME = 'code_ref'
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
-source_dir = "s3://jornaya-dev-us-east-1-rdl/{}".format(TBL_NAME)
 output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(TBL_NAME)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
-# Create data frame from the source tables
-df = spark.read.parquet(source_dir)
-
+# define udfs
 code_format_udf = udf(code_format, StringType())
-df = df.withColumn('value_cd', code_format_udf('value_cd'))
+
+# Create data frame from the source tables
+code_ref_rdl = glueContext.create_dynamic_frame.from_catalog(database="rdl",
+                                                             table_name=TBL_NAME,
+                                                             transformation_ctx="code_ref_rdl").toDF()
+
+code_ref_formatted = code_ref_rdl.withColumn('value_cd', code_format_udf('value_cd'))
 
 # cast all vals to stringtype
-df = df.select([col(x).alias(x).cast(StringType()) for x in df.schema.names])
+code_ref_strings = code_ref_formatted. \
+    select([col(x).alias(x).cast(StringType()) for x in code_ref_formatted.schema.names])
 
-df = df \
-  .withColumn("insert_ts", current_timestamp()) \
-  .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
-  .withColumn("insert_batch_run_id", lit(1).cast(IntegerType()))
+code_ref_df = code_ref_strings \
+    .withColumn("insert_ts", current_timestamp()) \
+    .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
+    .withColumn("insert_batch_run_id", lit(1).cast(IntegerType()))
 
 # TODO: pass the write mode in as an arg
-df.write.parquet(output_dir,
-                 mode='overwrite',
-                 compression='snappy')
+code_ref_strings.write.parquet(output_dir,
+                               mode='overwrite',
+                               compression='snappy')
 
 job.commit()

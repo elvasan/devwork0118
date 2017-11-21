@@ -3,12 +3,11 @@ import sys
 from pyspark.context import SparkContext
 from pyspark.sql.types import StringType, IntegerType, TimestampType
 from pyspark.sql.functions import col, current_timestamp, upper, lit, coalesce, concat_ws, md5, \
-  from_unixtime, length, when
+    from_unixtime, length, when
 
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
 from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
-
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -30,17 +29,16 @@ output_dir = "s3://jornaya-dev-us-east-1-lrf/{}".format(tbl_name)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
-db_name = 'udl'
 leads_tbl = "leads"
 code_ref_tbl = "code_ref"
 # Create DataFrame of LEADS table
 leads_udl_df = glueContext.create_dynamic_frame.from_catalog(database="{}".format(db_name),
-                                                         table_name="{}".format(leads_tbl),
-                                                         transformation_ctx="{}".format(leads_tbl)).toDF()
+                                                             table_name="{}".format(leads_tbl),
+                                                             transformation_ctx="{}".format(leads_tbl)).toDF()
 # Create DataFrame of CODE_REF table
 code_ref_udl_df = glueContext.create_dynamic_frame.from_catalog(database="{}".format(db_name),
-                                                             table_name="{}".format(code_ref_tbl),
-                                                             transformation_ctx="{}".format(code_ref_tbl)).toDF()
+                                                                table_name="{}".format(code_ref_tbl),
+                                                                transformation_ctx="{}".format(code_ref_tbl)).toDF()
 
 ip_geo_leads = leads_udl_df.select(
     "created",
@@ -67,24 +65,24 @@ region_codes = code_ref_udl_df.select(
 
 # JOIN country_code and region_code table
 result_table = ip_geo_leads.alias('l') \
-  .join(
+    .join(
     countries_codes.alias('c'),
     (upper(col('c_value_cd')) == upper(col('l.geoip_country_code'))),
     'left_outer') \
-  .join(
+    .join(
     region_codes.alias('r'),
     ((upper(col('r_code_desc')) == upper(col('geoip_region'))) & (col('r_value_cd') == col('c_value_cd'))),
     'left_outer') \
-  .select(
+    .select(
     when(((length(col('l.geoip_country_code')) >= 1) & (col('c_value_cd').isNotNull())), col('c_value_cd'))
-      .when(((length(col('l.geoip_country_code')) >= 1) & (col('c_value_cd').isNull())), lit('-1'))
-      .when(((length(col('l.geoip_country_code')) == 0) | (col('l.geoip_country_code').isNull())), lit('-2'))
-      .otherwise(lit('-3')).cast(StringType()).alias('country_cd'),
+        .when(((length(col('l.geoip_country_code')) >= 1) & (col('c_value_cd').isNull())), lit('-1'))
+        .when(((length(col('l.geoip_country_code')) == 0) | (col('l.geoip_country_code').isNull())), lit('-2'))
+        .otherwise(lit('-3')).cast(StringType()).alias('country_cd'),
 
     when(((length(col('l.geoip_region')) >= 1) & (col('r_code_desc').isNotNull())), col('r_code_desc'))
-      .when(((length(col('l.geoip_region')) >= 1) & (col('r_code_desc').isNull())), lit('-1'))
-      .when(((length(col('l.geoip_region')) == 0) | (col('l.geoip_region').isNull())), lit('-2'))
-      .otherwise(lit('-3')).cast(StringType()).alias('region_cd'),
+        .when(((length(col('l.geoip_region')) >= 1) & (col('r_code_desc').isNull())), lit('-1'))
+        .when(((length(col('l.geoip_region')) == 0) | (col('l.geoip_region').isNull())), lit('-2'))
+        .otherwise(lit('-3')).cast(StringType()).alias('region_cd'),
 
     col('l.geoip_city').alias('city_nm'),
     col("geoip_postal_code").alias('postal_cd'),
@@ -101,23 +99,23 @@ result_table_ts = result_table.withColumn('source_ts',
 # Add IP_Geolocation KEY which is (an MD5 hash of the following fields
 # Country_cd, Region_cd, City_nm, Postal_cd, isp_nm)
 ip_geolocation_with_key_df = result_table_ts \
-  .withColumn("ip_geolocation_key",
-              md5(concat_ws('|',
-                            col('country_cd'),
-                            col('region_cd'),
-                            coalesce(col('city_nm'), lit('').cast(StringType())),
-                            coalesce(col('postal_cd'), lit('').cast(StringType())),
-                            coalesce(col('isp_nm'), lit('').cast(StringType()))
-                            ))) \
-  .withColumn("insert_ts", current_timestamp()) \
-  .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
-  .withColumn("insert_batch_run_id", lit(1).cast(IntegerType())) \
-  .withColumn("load_action_ind", lit('i').cast(StringType()))
+    .withColumn("ip_geolocation_key",
+                md5(concat_ws('|',
+                              col('country_cd'),
+                              col('region_cd'),
+                              coalesce(col('city_nm'), lit('').cast(StringType())),
+                              coalesce(col('postal_cd'), lit('').cast(StringType())),
+                              coalesce(col('isp_nm'), lit('').cast(StringType()))
+                              ))) \
+    .withColumn("insert_ts", current_timestamp()) \
+    .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
+    .withColumn("insert_batch_run_id", lit(1).cast(IntegerType())) \
+    .withColumn("load_action_ind", lit('i').cast(StringType()))
 
 ip_geolocation_with_deduped_key_df = ip_geolocation_with_key_df \
-  .select('country_cd', 'region_cd', 'city_nm', 'postal_cd', 'isp_nm', 'source_ts',
-          'ip_geolocation_key', 'insert_ts', 'insert_job_run_id', 'insert_batch_run_id', 'load_action_ind') \
-  .dropDuplicates(['ip_geolocation_key'])
+    .select('country_cd', 'region_cd', 'city_nm', 'postal_cd', 'isp_nm', 'source_ts',
+            'ip_geolocation_key', 'insert_ts', 'insert_job_run_id', 'insert_batch_run_id', 'load_action_ind') \
+    .dropDuplicates(['ip_geolocation_key'])
 
 ip_geolocation_with_deduped_key_df.write.parquet(output_dir,
                                                  mode='overwrite',

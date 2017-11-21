@@ -27,20 +27,17 @@ TBL_NAME = 'entities'
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
-source_dir = "s3://jornaya-dev-us-east-1-rdl/{}".format(TBL_NAME)
 output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(TBL_NAME)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
-
 
 # UDF To get the DynamoDB json value
 get_dynamodb_value_udf = udf(get_dynamodb_value, StringType())
 
 # Create data frame from the source tables
-# This needs to change so we directly read it from Glue's Catalog and not use Glue Libraries
-entities_rdl = glueContext.create_dynamic_frame.from_catalog(database="rdl", table_name="entities",
-                                                              transformation_ctx="entities").toDF()
-df = spark.read.parquet(source_dir)
+entities_rdl = glueContext.create_dynamic_frame.from_catalog(database="rdl",
+                                                             table_name="entities",
+                                                             transformation_ctx="entities").toDF()
 
 keys = ['active',
         'code',
@@ -63,12 +60,11 @@ entities_extract = entities.select(
     fun.from_unixtime(get_dynamodb_value_udf(entities['modified'])).alias('source_ts').cast(TimestampType())
 )
 
-
 # add the job run columns
 entities_df = entities_extract \
-  .withColumn("insert_ts", current_timestamp()) \
-  .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
-  .withColumn("insert_batch_run_id", lit(1).cast(IntegerType()))
+    .withColumn("insert_ts", current_timestamp()) \
+    .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
+    .withColumn("insert_batch_run_id", lit(1).cast(IntegerType()))
 
 # TODO: pass the write mode in as an arg
 entities_df.write.parquet(output_dir,
