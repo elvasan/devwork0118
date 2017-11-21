@@ -28,7 +28,6 @@ TBL_NAME = 'accounts'
 
 # output directories
 # TODO: pass the buckets in as args instead of hardcoding them
-source_dir = "s3://jornaya-dev-us-east-1-rdl/{}".format(TBL_NAME)
 output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(TBL_NAME)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
@@ -38,10 +37,9 @@ temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['J
 get_dynamodb_value_udf = udf(get_dynamodb_value, StringType())
 
 # Read in the accounts table into an Dataframe
-# This needs to change so we directly read it from Glue's Catalog and not use Glue Libraries
-accounts_rdl = glueContext.create_dynamic_frame.from_catalog(database="rdl", table_name="accounts",
-                                                              transformation_ctx="accounts").toDF()
-#accounts_rdl = spark.read.parquet(source_dir)
+accounts_rdl = glueContext.create_dynamic_frame.from_catalog(database="rdl",
+                                                             table_name="accounts",
+                                                             transformation_ctx="accounts").toDF()
 
 keys = ['active',
         'affiliate_click_network',
@@ -79,36 +77,51 @@ accounts = accounts_rdl.select(*exprs)
 
 # TODO: generate the types from the DDL
 accounts_extract = accounts.select(get_dynamodb_value_udf(accounts['active']).alias('active').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['affiliate_click_network']).alias('affiliate_click_network').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['api_key']).alias('api_key').cast(StringType()),
-    get_dynamodb_value_udf(accounts['audit_auth']).alias('audit_auth').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['audit_full']).alias('audit_full').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['audit_pre']).alias('audit_pre').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['audit_self']).alias('audit_self').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['call_center']).alias('call_center').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['code']).alias('code').cast(StringType()),
-    get_dynamodb_value_udf(accounts['contribute']).alias('contribute').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['create']).alias('create').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['created']).alias('created').cast(DoubleType()),
-    get_dynamodb_value_udf(accounts['email']).alias('email').cast(StringType()),
-    get_dynamodb_value_udf(accounts['entity_code']).alias('entity_code').cast(StringType()),
-    get_dynamodb_value_udf(accounts['industry']).alias('industry').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['lead_aggregator']).alias('lead_aggregator').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['lead_originator']).alias('lead_originator').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['legal_agreed']).alias('legal_agreed').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['legal_agreed_date']).alias('legal_agreed_date').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['logging']).alias('logging').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['marketplace']).alias('marketplace').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['mobile_network']).alias('mobile_network').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['modified']).alias('modified').cast(DoubleType()),
-    get_dynamodb_value_udf(accounts['name']).alias('name').cast(StringType()),
-    get_dynamodb_value_udf(accounts['referral_source']).alias('referral_source').cast(StringType()),
-    get_dynamodb_value_udf(accounts['role']).alias('role').cast(StringType()),
-    get_dynamodb_value_udf(accounts['status']).alias('status').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['testing']).alias('testing').cast(IntegerType()),
-    get_dynamodb_value_udf(accounts['website']).alias('website').cast(StringType()),
-    fun.from_unixtime(get_dynamodb_value_udf(accounts['modified'])).alias('source_ts').cast(TimestampType())
-    )
+                                   get_dynamodb_value_udf(accounts['affiliate_click_network']).alias(
+                                       'affiliate_click_network').cast(IntegerType()),
+                                   get_dynamodb_value_udf(accounts['api_key']).alias('api_key').cast(StringType()),
+                                   get_dynamodb_value_udf(accounts['audit_auth']).alias('audit_auth').cast(
+                                       IntegerType()),
+                                   get_dynamodb_value_udf(accounts['audit_full']).alias('audit_full').cast(
+                                       IntegerType()),
+                                   get_dynamodb_value_udf(accounts['audit_pre']).alias('audit_pre').cast(IntegerType()),
+                                   get_dynamodb_value_udf(accounts['audit_self']).alias('audit_self').cast(
+                                       IntegerType()),
+                                   get_dynamodb_value_udf(accounts['call_center']).alias('call_center').cast(
+                                       IntegerType()),
+                                   get_dynamodb_value_udf(accounts['code']).alias('code').cast(StringType()),
+                                   get_dynamodb_value_udf(accounts['contribute']).alias('contribute').cast(
+                                       IntegerType()),
+                                   get_dynamodb_value_udf(accounts['create']).alias('create').cast(IntegerType()),
+                                   get_dynamodb_value_udf(accounts['created']).alias('created').cast(DoubleType()),
+                                   get_dynamodb_value_udf(accounts['email']).alias('email').cast(StringType()),
+                                   get_dynamodb_value_udf(accounts['entity_code']).alias('entity_code').cast(
+                                       StringType()),
+                                   get_dynamodb_value_udf(accounts['industry']).alias('industry').cast(IntegerType()),
+                                   get_dynamodb_value_udf(accounts['lead_aggregator']).alias('lead_aggregator').cast(
+                                       IntegerType()),
+                                   get_dynamodb_value_udf(accounts['lead_originator']).alias('lead_originator').cast(
+                                       IntegerType()),
+                                   get_dynamodb_value_udf(accounts['legal_agreed']).alias('legal_agreed').cast(
+                                       IntegerType()),
+                                   get_dynamodb_value_udf(accounts['legal_agreed_date']).alias(
+                                       'legal_agreed_date').cast(IntegerType()),
+                                   get_dynamodb_value_udf(accounts['logging']).alias('logging').cast(IntegerType()),
+                                   get_dynamodb_value_udf(accounts['marketplace']).alias('marketplace').cast(
+                                       IntegerType()),
+                                   get_dynamodb_value_udf(accounts['mobile_network']).alias('mobile_network').cast(
+                                       IntegerType()),
+                                   get_dynamodb_value_udf(accounts['modified']).alias('modified').cast(DoubleType()),
+                                   get_dynamodb_value_udf(accounts['name']).alias('name').cast(StringType()),
+                                   get_dynamodb_value_udf(accounts['referral_source']).alias('referral_source').cast(
+                                       StringType()),
+                                   get_dynamodb_value_udf(accounts['role']).alias('role').cast(StringType()),
+                                   get_dynamodb_value_udf(accounts['status']).alias('status').cast(IntegerType()),
+                                   get_dynamodb_value_udf(accounts['testing']).alias('testing').cast(IntegerType()),
+                                   get_dynamodb_value_udf(accounts['website']).alias('website').cast(StringType()),
+                                   fun.from_unixtime(get_dynamodb_value_udf(accounts['modified'])).alias(
+                                       'source_ts').cast(TimestampType())
+                                   )
 
 # add the job run columns
 accounts_df = accounts_extract \

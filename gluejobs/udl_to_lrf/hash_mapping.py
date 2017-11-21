@@ -32,28 +32,35 @@ temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['J
 
 # pii_hashing udl
 pii_hashing_tbl = "pii_hashing"
-pii_hashing_udl_df = spark.read.parquet("s3://jornaya-dev-us-east-1-udl/{}".format(pii_hashing_tbl))
+pii_hashing_udl_df = glueContext.create_dynamic_frame.from_catalog(database="{}".format(db_name),
+                                                                   table_name="{}".format(pii_hashing_tbl),
+                                                                   transformation_ctx="{}".format(
+                                                                       pii_hashing_tbl)).toDF()
 
 # code_ref udl
 code_ref_tbl = "code_ref"
-code_ref_udl_df = spark.read.parquet('s3://jornaya-dev-us-east-1-udl/{}'.format(code_ref_tbl))
+code_ref_udl_df = glueContext.create_dynamic_frame.from_catalog(database="{}".format(db_name),
+                                                                table_name="{}".format(code_ref_tbl),
+                                                                transformation_ctx="{}".format(
+                                                                    code_ref_tbl)).toDF()
+
 code_ref_udl_df = code_ref_udl_df.where(code_ref_udl_df.domain_nm == 'hash_type_cd')
 code_format_udf = udf(code_format, StringType())
 code_ref_udl_df = code_ref_udl_df.withColumn("code_nm_formatted", code_format_udf("code_nm"))
 
 # Join  PII_HASHING and CODE_REF table based on hash_type
-join_df = pii_hashing_udl_df.alias('pii').\
-  join(code_ref_udl_df.alias('code_ref'), col('code_ref.code_nm_formatted') == upper(col('pii.hash_type'))).\
-  select(col('pii.canonical_hash').alias('canonical_hash_value'),
-         col('code_ref.value_cd').alias('hash_type_cd'),
-         col('pii.hash').alias('hash_value'),
-         col('pii.insert_ts').alias('source_ts'))  # store the UDL timestamp because the FDL record doesn't have one
+join_df = pii_hashing_udl_df.alias('pii'). \
+    join(code_ref_udl_df.alias('code_ref'), col('code_ref.code_nm_formatted') == upper(col('pii.hash_type'))). \
+    select(col('pii.canonical_hash').alias('canonical_hash_value'),
+           col('code_ref.value_cd').alias('hash_type_cd'),
+           col('pii.hash').alias('hash_value'),
+           col('pii.insert_ts').alias('source_ts'))  # store the UDL timestamp because the FDL record doesn't have one
 
 join_with_jobs_df = join_df \
-  .withColumn("insert_ts", current_timestamp()) \
-  .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
-  .withColumn("insert_batch_run_id", lit(1).cast(IntegerType())) \
-  .withColumn("load_action_ind", lit('i').cast(StringType()))
+    .withColumn("insert_ts", current_timestamp()) \
+    .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
+    .withColumn("insert_batch_run_id", lit(1).cast(IntegerType())) \
+    .withColumn("load_action_ind", lit('i').cast(StringType()))
 
 join_with_jobs_df.write.parquet(output_dir,
                                 mode='overwrite',

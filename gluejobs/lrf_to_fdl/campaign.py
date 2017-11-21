@@ -1,10 +1,9 @@
 import sys
 from pyspark.context import SparkContext
 
-
-from awsglue.utils import getResolvedOptions # pylint: disable=import-error
-from awsglue.context import GlueContext # pylint: disable=import-error
-from awsglue.job import Job # pylint: disable=import-error
+from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
+from awsglue.context import GlueContext  # pylint: disable=import-error
+from awsglue.job import Job  # pylint: disable=import-error
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -15,7 +14,6 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-
 # define catalog variables
 tbl_name = 'campaign'
 
@@ -24,15 +22,14 @@ output_dir = "s3://jornaya-dev-us-east-1-fdl/{}".format(tbl_name)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
-
 # Reading in the source files from LFR
 db_name = 'lrf'
 source_tbl = "campaign"
 
 # Read in the accounts table into an Dataframe
 campaign_lrf_df = glueContext.create_dynamic_frame.from_catalog(database="{}".format(db_name),
-                                                               table_name="{}".format(source_tbl),
-                                                               transformation_ctx="{}".format(source_tbl)).toDF()
+                                                                table_name="{}".format(source_tbl),
+                                                                transformation_ctx="{}".format(source_tbl)).toDF()
 
 # Select fdl specific columns
 campaign_fdl_df = campaign_lrf_df.select(

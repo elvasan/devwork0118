@@ -4,9 +4,9 @@ from pyspark.context import SparkContext
 from pyspark.sql.functions import current_timestamp, lit, coalesce, concat, md5, when, from_unixtime
 from pyspark.sql.types import BooleanType, StringType, TimestampType, IntegerType
 
-from awsglue.utils import getResolvedOptions # pylint: disable=import-error
-from awsglue.context import GlueContext # pylint: disable=import-error
-from awsglue.job import Job # pylint: disable=import-error
+from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
+from awsglue.context import GlueContext  # pylint: disable=import-error
+from awsglue.job import Job  # pylint: disable=import-error
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -17,7 +17,6 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-
 # define catalog variables
 tbl_name = 'company'
 
@@ -26,13 +25,10 @@ output_dir = "s3://jornaya-dev-us-east-1-lrf/{}".format(tbl_name)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
-
 # Reading in the source files from UDL
 db_name = 'udl'
 source1_tbl = "accounts"
 source2_tbl = "entities"
-#entities = spark.read.parquet("s3://jornaya-dev-us-east-1-udl/{}".format(source1_tbl))
-#accounts = spark.read.parquet("s3://jornaya-dev-us-east-1-udl/{}".format(source2_tbl))
 
 # Read in the accounts/Entities table into an Dataframe
 # This needs to change so we directly read it from Glue's Catalog and not use Glue Libraries
@@ -46,7 +42,6 @@ entities = glueContext.create_dynamic_frame.from_catalog(database="{}".format(db
 
 # Variable declaration
 curr_tmstp = current_timestamp()
-
 
 # Transformations for company table to lrf
 company_extract = entities \

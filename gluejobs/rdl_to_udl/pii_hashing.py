@@ -24,13 +24,14 @@ TBL_NAME = 'pii_hashing'
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
-source_dir = "s3://jornaya-dev-us-east-1-rdl/{}".format(TBL_NAME)
 output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(TBL_NAME)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
 # Create data frame from the source tables
-df = spark.read.parquet(source_dir)
+pii_hashing_rdl = glueContext.create_dynamic_frame.from_catalog(database="rdl",
+                                                                table_name=TBL_NAME,
+                                                                transformation_ctx="pii_hashing_rdl").toDF()
 
 keys = ['canonical_hash',
         'hash',
@@ -38,23 +39,22 @@ keys = ['canonical_hash',
         ]
 
 exprs = [col("item").getItem(k).alias(k) for k in keys]
-df = df.select(*exprs)
+pii_hashing = pii_hashing_rdl.select(*exprs)
 
-# TODO: generate the types from the DDL
-df = df.select(
-    from_json(df['canonical_hash'], s_schema).getItem('s').alias('canonical_hash').cast(StringType()),
-    from_json(df['hash'], s_schema).getItem('s').alias('hash').cast(StringType()),
-    from_json(df['hash_type'], s_schema).getItem('s').alias('hash_type').cast(StringType()),
+pii_hashing_extract = pii_hashing.select(
+    from_json(pii_hashing['canonical_hash'], s_schema).getItem('s').alias('canonical_hash').cast(StringType()),
+    from_json(pii_hashing['hash'], s_schema).getItem('s').alias('hash').cast(StringType()),
+    from_json(pii_hashing['hash_type'], s_schema).getItem('s').alias('hash_type').cast(StringType()),
 )
 
 # add the job run columns
-df = df \
-  .withColumn("insert_ts", current_timestamp()) \
-  .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
-  .withColumn("insert_batch_run_id", lit(1).cast(IntegerType()))
+pii_hashing_df = pii_hashing_extract \
+    .withColumn("insert_ts", current_timestamp()) \
+    .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
+    .withColumn("insert_batch_run_id", lit(1).cast(IntegerType()))
 
 # TODO: pass the write mode in as an arg
-df.write.parquet(output_dir,
-                 mode='overwrite',
-                 compression='snappy')
+pii_hashing_df.write.parquet(output_dir,
+                             mode='overwrite',
+                             compression='snappy')
 job.commit()
