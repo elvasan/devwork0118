@@ -19,19 +19,21 @@ job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
 # define catalog source
-db_name = 'udl'
-tbl_name = 'campaigns'
+source_db_name = 'udl'
+source_tbl_name = 'campaigns'
+target_db_name = 'lrf'
+target_tbl_name = 'campaign'
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
-output_dir = "s3://jornaya-dev-us-east-1-lrf/{}".format(tbl_name)
+output_dir = "s3://jornaya-dev-us-east-1-{}/{}".format(target_db_name, target_db_name)
 staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
 temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
 # This needs to change so we directly read it from Glue's Catalog and not use Glue Libraries
-campaigns_udl_df = glueContext.create_dynamic_frame.from_catalog(database="{}".format(db_name),
-                                                         table_name="{}".format(tbl_name),
-                                                         transformation_ctx="{}".format(tbl_name)).toDF()
+campaigns_udl_df = glueContext.create_dynamic_frame.from_catalog(database="{}".format(source_db_name),
+                                                         table_name="{}".format(source_tbl_name),
+                                                         transformation_ctx="{}".format(source_tbl_name)).toDF()
 
 campaigns_udl_lrf = campaigns_udl_df.select(
     col('account_code').cast(StringType()).alias('account_id'),
