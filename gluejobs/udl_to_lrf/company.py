@@ -1,7 +1,7 @@
 # Company transformation from UDL to LRF
 import sys
 from pyspark.context import SparkContext
-from pyspark.sql.functions import current_timestamp, lit, coalesce, concat_ws, md5, when, from_unixtime, col
+from pyspark.sql.functions import current_timestamp, lit, coalesce, concat_ws, md5, when, from_unixtime
 from pyspark.sql.types import StringType, TimestampType, IntegerType
 
 from awsglue.utils import getResolvedOptions # pylint: disable=import-error
