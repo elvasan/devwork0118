@@ -80,9 +80,9 @@ urls_df = urls_extract \
 urls_partitioned = urls_df.withColumn('create_day', to_date(from_unixtime(urls_df.created, 'yyyy-MM-dd')))
 
 # TODO: pass the write mode in as an arg
-urls_df.write.parquet(output_dir,
-                      mode='overwrite',
-                      partitionBy=['create_day'],
-                      compression='snappy')
+urls_partitioned.write.parquet(output_dir,
+                               mode='overwrite',
+                               partitionBy=['create_day'],
+                               compression='snappy')
 
 job.commit()
