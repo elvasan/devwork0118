@@ -1,29 +1,25 @@
-import sys
-
-from pyspark.context import SparkContext
-from pyspark.sql.types import StringType, StructType, StructField, ArrayType, IntegerType, DoubleType, TimestampType
-from pyspark.sql.functions import from_json, from_unixtime, col, explode, get_json_object, concat, lit, udf, \
-     current_timestamp, to_date
-from pyspark.sql import DataFrame
+from pyspark.sql.functions import from_json, from_unixtime, udf, col, explode, get_json_object, concat, lit, current_timestamp, to_date
 from functools import reduce
+from pyspark.sql.types import *
+from pyspark.sql import SparkSession, DataFrame
 
-from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
-from awsglue.context import GlueContext  # pylint: disable=import-error
-from awsglue.job import Job  # pylint: disable=import-error
+import base64, zlib, gzip
 
-from glutils.job_objects import b_schema
-from glutils.job_utils import zipped_b64_to_string
+from pyspark.sql.types import StringType, StructType, StructField, ArrayType, IntegerType, BooleanType, DoubleType, TimestampType
 
-args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+b_schema = StructType([StructField('b', StringType())])
 
-# context and job setup
-sc = SparkContext()
-glueContext = GlueContext(sc)
-spark = glueContext.spark_session
-job = Job(glueContext)
-job.init(args['JOB_NAME'], args)
+input_schema = StructType([StructField("item", MapType(StringType(), StringType()))])
 
-# Schema definition for Init fields to be extracted
+def zipped_b64_to_string(val):
+    if val:
+        zipped_string = base64.b64decode(val)
+        return zlib.decompress(zipped_string, 16 + zlib.MAX_WBITS).decode('utf-8')
+
+def unionAll(*dfs):
+    return reduce(DataFrame.unionAll, dfs)
+
+b64_udf = udf(zipped_b64_to_string, StringType())
 
 init_schema = StructType([
     StructField("fields", ArrayType(
@@ -44,29 +40,30 @@ init_schema = StructType([
     ), True)
 ])
 
-# Define the UDF for decompressing binary init values
-b64_udf = udf(zipped_b64_to_string, StringType())
-
-# define catalog source
-# db_name = 'rdl'
 TBL_NAME = 'formdata'
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
-output_dir = "s3://jornaya-dev-us-east-1-udl/{}".format(TBL_NAME)
-staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
-temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
+#output_dir = "s3://jornaya-dev-us-east-1-udl/krish/{}".format(TBL_NAME)
 
-# Create data frame from the source tables
-formdata_rdl = glueContext.create_dynamic_frame.from_catalog(database="rdl",
-                                                             table_name=TBL_NAME,
-                                                             transformation_ctx="formdata_rdl").toDF()
+output_dir = "/home/hadoop/formdata/"
 
+spark = SparkSession.builder \
+    .appName("formdata_trans") \
+    .config("spark.yarn.executor.memoryOverhead", "5120") \
+    .config("spark.yarn.driver.memoryOverhead", "5120") \
+    .config("spark.sql.parquet.mergeSchema false", "false") \
+    .config("spark.sql.parquet.filterPushdown", "true") \
+    .config("spark.hadoop.parquet.enable.summary-metadata", "false") \
+    .config("spark.sql.hive.metastorePartitionPruning", "true") \
+    .getOrCreate()
 
+df = spark.read.schema(input_schema).parquet("s3://jornaya-dev-us-east-1-rdl/formdata/")
 
-# This logic only works on rows where init column with string and binary datatypes are null
-form_wthout_init_df = formdata_rdl \
-    .where(get_json_object(formdata_rdl['item.init'], '$.b').isNull() & get_json_object(formdata_rdl['item.init'], '$.s').isNull()) \
+fm_noinit_df = df \
+    .where(get_json_object(df['item.init'], '$.b').isNull() & get_json_object(df['item.init'], '$.s').isNull())
+
+form_wthout_init_df = fm_noinit_df \
     .select(
     get_json_object('item.checked', '$.n').alias('checked').cast(IntegerType()), \
     get_json_object('item.client_time', '$.n').alias('client_time').cast(IntegerType()), \
@@ -90,13 +87,14 @@ form_wthout_init_df = formdata_rdl \
     get_json_object('item.type', '$.n').alias('type').cast(IntegerType()), \
     get_json_object('item.value', '$.s').alias('value').cast(StringType()), \
     from_unixtime(get_json_object('item.created', '$.n')).alias('source_ts').cast(TimestampType()) \
-    ).persist()
+    )
 
-# This logic only works on init values with string datatype and extracts values as needed for UDL
-form_init_str_df = formdata_rdl \
-    .where(formdata_rdl['item.init'].isNotNull()) \
-    .select(concat(lit('{"fields":'), get_json_object(formdata_rdl['item.init'], '$.s'), lit('}')).alias('fields'), formdata_rdl['item']) \
-    .select(explode(from_json('fields', init_schema)['fields']).alias('fields'), formdata_rdl['item']) \
+fm_initstr_df = df \
+    .where(df['item.init'].isNotNull())
+
+form_init_str_df = fm_initstr_df \
+    .select(concat(lit('{"fields":'), get_json_object(df['item.init'], '$.s'), lit('}')).alias('fields'), df['item']) \
+    .select(explode(from_json('fields', init_schema)['fields']).alias('fields'), df['item']) \
     .select( \
     col('fields.checked').alias('checked').cast(IntegerType()), \
     get_json_object('item.client_time', '$.n').alias('client_time').cast(IntegerType()), \
@@ -122,13 +120,13 @@ form_init_str_df = formdata_rdl \
     from_unixtime(get_json_object('item.created', '$.n')).alias('source_ts').cast(TimestampType()) \
     )
 
-# The below logic extracts only init fields with binary value and applies the UDF to decompress and extract the required
-# Fields
-form_init_bin_df = formdata_rdl \
-    .where(get_json_object(formdata_rdl['item.init'], '$.b').isNotNull()) \
-    .select(from_json(formdata_rdl['item.init'], b_schema).alias('init_binary').cast(StringType()), formdata_rdl['item']) \
-    .select(concat(lit('{"fields":'), b64_udf('init_binary'), lit('}')).alias('fields'), formdata_rdl['item']) \
-    .select(explode(from_json('fields', init_schema)['fields']).alias('fields'), formdata_rdl['item']) \
+fm_initbin_df = df \
+    .where(get_json_object(df['item.init'], '$.b').isNotNull())
+
+form_init_bin_df = fm_initbin_df \
+    .select(from_json(df['item.init'], b_schema).alias('init_binary').cast(StringType()), df['item']) \
+    .select(concat(lit('{"fields":'), b64_udf('init_binary'), lit('}')).alias('fields'), df['item']) \
+    .select(explode(from_json('fields', init_schema)['fields']).alias('fields'), df['item']) \
     .select( \
     col('fields.checked').alias('checked').cast(IntegerType()), \
     get_json_object('item.client_time', '$.n').alias('client_time').cast(IntegerType()), \
@@ -154,24 +152,21 @@ form_init_bin_df = formdata_rdl \
     from_unixtime(get_json_object('item.created', '$.n')).alias('source_ts').cast(TimestampType()) \
     )
 
-# This needs to be defined on job utils eventually once this works fine
-# This function does an UNIONALL of all the three dataframes
-def unionAll(*dfs):
-    return reduce(DataFrame.unionAll, dfs)
-
-form_un_df = unionAll(form_wthout_init_df, form_init_str_df, form_init_bin_df)
+form_un_df = unionAll(form_wthout_init_df, form_init_str_df, form_init_bin_df).persist()
 
 forms_df = form_un_df \
     .withColumn("insert_ts", current_timestamp()) \
     .withColumn("insert_job_run_id", lit(1).cast(IntegerType())) \
-    .withColumn("insert_batch_run_id", lit(1).cast(IntegerType())) \
-    .withColumn('create_day', to_date(from_unixtime(form_un_df.created, 'yyyy-MM-dd')))
+    .withColumn("insert_batch_run_id", lit(1).cast(IntegerType()))
 
+formdata_df = forms_df.withColumn('create_day', to_date(from_unixtime(forms_df.created, 'yyyy-MM-dd')))
 
 # TODO: pass the write mode in as an arg
-forms_df.write.parquet(output_dir,
+formdata_df.write.parquet(output_dir,
                           mode='overwrite',
                           partitionBy=['create_day'],
                           compression='snappy')
 
-job.commit()
+
+# Command to copy data from local EMR HDFS to S3 location
+# s3-dist-cp --src /home/hadoop/krish/formdata/ --dest s3://jornaya-dev-us-east-1-udl/formdata/ --srcPattern='.' --multipartUploadChunkSize=5000
