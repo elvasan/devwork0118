@@ -39,5 +39,11 @@ class TestJobUtilFunctions(unittest.TestCase):
         expected = '1'
         self.assertEqual(expected, get_dynamodb_value(initval))
 
+    def test_unionAll(self):
+        initval = '{"n", "1"}'
+        expected = '1'
+        self.assertEqual(expected, get_dynamodb_value(initval))
+
+
 if __name__ == '__main__':
     unittest.main()
