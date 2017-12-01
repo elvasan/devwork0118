@@ -1,11 +1,11 @@
+from functools import reduce
+import base64
+import zlib
 from pyspark.sql.functions import from_json, from_unixtime, udf, col, explode, get_json_object, concat, lit, \
      current_timestamp, to_date
-from functools import reduce
 from pyspark.sql.types import StringType, StructType, StructField, ArrayType, IntegerType, DoubleType, TimestampType, \
      MapType
 from pyspark.sql import SparkSession, DataFrame
-
-import base64, zlib
 
 
 # This schema defination is used to extract the binary init values, using other schema like '$.b' fails on zip udf
@@ -22,7 +22,7 @@ def zipped_b64_to_string(val):
 
 
 # This function does an UNIONALL of all the dataframes passed in
-def unionAll(*dfs):
+def unionall(*dfs):
     return reduce(DataFrame.unionAll, dfs)
 
 
@@ -161,7 +161,7 @@ form_init_bin_df = fm_initbin_df \
         from_unixtime(get_json_object('item.created', '$.n')).alias('source_ts').cast(TimestampType())
     )
 
-form_un_df = unionAll(form_wthout_init_df, form_init_str_df, form_init_bin_df).persist()
+form_un_df = unionall(form_wthout_init_df, form_init_str_df, form_init_bin_df).persist()
 
 forms_df = form_un_df \
     .withColumn("insert_ts", current_timestamp()) \

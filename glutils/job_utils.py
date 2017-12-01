@@ -6,8 +6,8 @@ This module contains commonly used functions for the glue etl jobs.
 import base64
 import zlib
 import json
-from pyspark.sql import DataFrame
 from functools import reduce
+from pyspark.sql import DataFrame
 
 
 def zipped_b64_to_string(val):
@@ -28,5 +28,5 @@ def get_dynamodb_value(dynamodb_string):
 
 
 # This function does an UNIONALL of all the dataframes passed in
-def unionAll(*dfs):
+def unionall(*dfs):
     return reduce(DataFrame.unionAll, dfs)

@@ -10,7 +10,7 @@ from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
 
 from glutils.job_objects import b_schema
-from glutils.job_utils import zipped_b64_to_string, unionAll
+from glutils.job_utils import zipped_b64_to_string, unionall
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -157,7 +157,7 @@ form_init_bin_df = formdata_rdl \
 
 
 # Use the Union All function to merge all the dataframes
-form_un_df = unionAll(form_wthout_init_df, form_init_str_df, form_init_bin_df).persist()
+form_un_df = unionall(form_wthout_init_df, form_init_str_df, form_init_bin_df).persist()
 
 # Add in the additional columns
 forms_df = form_un_df \
