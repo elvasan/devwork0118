@@ -39,5 +39,6 @@ class TestJobUtilFunctions(unittest.TestCase):
         expected = '1'
         self.assertEqual(expected, get_dynamodb_value(initval))
 
+
 if __name__ == '__main__':
     unittest.main()
