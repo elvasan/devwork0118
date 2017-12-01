@@ -23,4 +23,3 @@ def code_format(val):
 def get_dynamodb_value(dynamodb_string):
     if dynamodb_string:
         return list(json.loads(dynamodb_string).values())[0]
-
