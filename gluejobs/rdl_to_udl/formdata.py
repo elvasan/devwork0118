@@ -1,5 +1,6 @@
 import sys
-
+from functools import reduce
+from pyspark.sql import DataFrame
 from pyspark.context import SparkContext
 from pyspark.sql.types import StringType, StructType, StructField, ArrayType, IntegerType, DoubleType, TimestampType
 from pyspark.sql.functions import from_json, from_unixtime, col, explode, get_json_object, concat, lit, udf, \
@@ -10,7 +11,7 @@ from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
 
 from glutils.job_objects import b_schema
-from glutils.job_utils import zipped_b64_to_string, unionall
+from glutils.job_utils import zipped_b64_to_string
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -157,7 +158,7 @@ form_init_bin_df = formdata_rdl \
 
 
 # Use the Union All function to merge all the dataframes
-form_un_df = unionall(form_wthout_init_df, form_init_str_df, form_init_bin_df).persist()
+form_un_df = reduce(DataFrame.unionAll, [form_wthout_init_df, form_init_str_df, form_init_bin_df]).persist()
 
 # Add in the additional columns
 forms_df = form_un_df \
