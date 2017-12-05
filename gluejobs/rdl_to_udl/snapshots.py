@@ -80,10 +80,11 @@ snapshots_df = snapshots_extract \
 snapshots_partitioned = snapshots_df.withColumn('create_day',
                                                 to_date(from_unixtime(snapshots_df.server_time, 'yyyy-MM-dd')))
 
+snapshots_repartitioned = snapshots_partitioned.repartition(1)
 # TODO: pass the write mode in as an arg
-snapshots_partitioned.write.parquet(output_dir,
-                                    mode='overwrite',
-                                    partitionBy=['create_day'],
-                                    compression='snappy')
+snapshots_repartitioned.write.parquet(output_dir,
+                                      mode='overwrite',
+                                      partitionBy=['create_day'],
+                                      compression='snappy')
 
 job.commit()
