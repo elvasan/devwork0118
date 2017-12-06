@@ -30,7 +30,6 @@ company_lrf_df = glueContext.create_dynamic_frame.from_catalog(database="lrf",
 company_edw_df = company_lrf_df.select(
     company_lrf_df.account_key,
     company_lrf_df.account_id,
-    company_lrf_df.source_mod_ts,
     company_lrf_df.company_nm,
     company_lrf_df.entity_id,
     company_lrf_df.is_active_ind,

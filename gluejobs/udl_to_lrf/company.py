@@ -51,20 +51,19 @@ curr_tmstp = current_timestamp()
 # Transformations for company table to lrf
 company_extract = entities \
     .join(
-    accounts, entities.code == accounts.entity_code, 'right_outer') \
+        accounts, entities.code == accounts.entity_code, 'right_outer') \
     .select(
-    md5(concat_ws('|', accounts.code, from_unixtime(accounts.modified))).alias('account_key').cast(StringType()),
-    accounts.code.alias('account_id'),
-    when((accounts.modified).isNull() & (accounts.created).isNull(), '9999-12-31 23:59:59.999999')
+        md5(concat_ws('|', accounts.code, from_unixtime(accounts.modified))).alias('account_key').cast(StringType()),
+        accounts.code.alias('account_id'),
+        when(accounts.modified.isNull() & accounts.created.isNull(), '9999-12-31 23:59:59.999999')
         .otherwise(coalesce(from_unixtime(accounts.modified), from_unixtime(accounts.created)))
-        .cast(TimestampType()).alias('source_mod_ts'),
-    when(entities.name != ' ', entities.name).otherwise(accounts.name).alias('company_nm'),
-    accounts.entity_code.alias('entity_id'),
-    when(accounts.active == 1, accounts.active).otherwise(0).alias('is_active_ind').cast(IntegerType()),
-    accounts.role.alias('role_nm'),
-    curr_tmstp.alias('insert_ts').cast(TimestampType()),
-    accounts.source_ts
-)
+        .cast(TimestampType()).alias('source_ts'),
+        when(entities.name != ' ', entities.name).otherwise(accounts.name).alias('company_nm'),
+        accounts.entity_code.alias('entity_id'),
+        when(accounts.active == 1, accounts.active).otherwise(0).alias('is_active_ind').cast(IntegerType()),
+        accounts.role.alias('role_nm'),
+        curr_tmstp.alias('insert_ts').cast(TimestampType())
+    )
 
 # The below transformation should be updated once we have ABC fully ready
 company_fnl = company_extract \
