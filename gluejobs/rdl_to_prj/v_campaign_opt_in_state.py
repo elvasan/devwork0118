@@ -12,51 +12,50 @@ args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 # context and job setup
 sc = SparkContext()
 glueContext = GlueContext(sc)
-spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
 # Define the output directory
 output_dir = 's3://jornaya-dev-us-east-1-prj/publisher_permissions/v_campaign_opt_in_state/v_campaign_opt_in_state/'
-staging_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/staging/{}".format(args['JOB_NAME'])
-temp_dir = "s3://jornaya-dev-us-east-1-etl-code/glue/jobs/tmp/{}".format(args['JOB_NAME'])
 
 # Get the campaign opt in information and select out the max timestamp for each campaign key
-campaign_opt_in_event = glueContext.create_dynamic_frame \
-    .from_catalog(database='rdl', table_name='campaign_opt_in_event') \
-    .toDF()
+campaign_event = glueContext.create_dynamic_frame \
+    .from_catalog(database='prj', table_name='campaign_opt_in_event') \
+    .toDF() \
+    .alias('campaign_event')
 
-grouped_campaign_events = (campaign_opt_in_event.groupBy(['campaign_key', 'application_key'])) \
+grouped_campaign_events = (campaign_event.groupBy(['campaign_key', 'application_key'])) \
     .agg(max_('opt_in_ts')) \
-    .withColumnRenamed('max(opt_in_ts)', 'opt_in_ts')
+    .withColumnRenamed('max(opt_in_ts)', 'opt_in_ts') \
+    .alias('grouped_campaign_events')
 
-campaign_join_expression = [grouped_campaign_events.campaign_key == campaign_opt_in_event.campaign_key,
-                            grouped_campaign_events.application_key == campaign_opt_in_event.application_key,
-                            grouped_campaign_events.opt_in_ts == campaign_opt_in_event.opt_in_ts]
+campaign_join_expression = [grouped_campaign_events.campaign_key == campaign_event.campaign_key,
+                            grouped_campaign_events.application_key == campaign_event.application_key,
+                            grouped_campaign_events.opt_in_ts == campaign_event.opt_in_ts]
 
-campaign_opt_in_event = grouped_campaign_events.join(campaign_opt_in_event, campaign_join_expression, 'left') \
+campaign_opt_in_event = campaign_event.join(grouped_campaign_events, campaign_join_expression, 'right') \
     .select(grouped_campaign_events.campaign_key,
             grouped_campaign_events.application_key,
-            campaign_opt_in_event.opt_in_ind)
+            campaign_event.opt_in_ind)
 
 # Get the account opt in information and select out the max timestamp for each account id
 # Group by account_id and app key and filter out timestamps which are less then the max for that grouping
-account_opt_in_event = glueContext.create_dynamic_frame \
-    .from_catalog(database='rdl', table_name='account_opt_in_event') \
+account_event = glueContext.create_dynamic_frame \
+    .from_catalog(database='prj', table_name='account_opt_in_event') \
     .toDF()
 
-grouped_account_events = (account_opt_in_event.groupBy(['account_id', 'application_key'])) \
+grouped_account_events = (account_event.groupBy(['account_id', 'application_key'])) \
     .agg(max_('opt_in_ts')) \
     .withColumnRenamed('max(opt_in_ts)', 'opt_in_ts')
 
-account_join_expression = [grouped_account_events.account_id == account_opt_in_event.account_id,
-                           grouped_account_events.application_key == account_opt_in_event.application_key,
-                           grouped_account_events.opt_in_ts == account_opt_in_event.opt_in_ts]
+account_join_expression = [grouped_account_events.account_id == account_event.account_id,
+                           grouped_account_events.application_key == account_event.application_key,
+                           grouped_account_events.opt_in_ts == account_event.opt_in_ts]
 
-account_opt_in_event = grouped_account_events.join(account_opt_in_event, account_join_expression, 'left') \
-    .select(grouped_account_events.campaign_key,
+account_opt_in_event = account_event.join(grouped_account_events, account_join_expression, 'right') \
+    .select(grouped_account_events.account_id,
             grouped_account_events.application_key,
-            account_opt_in_event.opt_in_ind)
+            account_event.opt_in_ind)
 
 # Get all campaigns
 campaigns = glueContext.create_dynamic_frame \
