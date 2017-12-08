@@ -2,7 +2,8 @@ import sys
 from functools import reduce
 from pyspark.sql import DataFrame
 from pyspark.context import SparkContext
-from pyspark.sql.types import StringType, StructType, StructField, ArrayType, IntegerType, DoubleType, TimestampType
+from pyspark.sql.types import StringType, StructType, StructField, ArrayType, IntegerType, DoubleType, TimestampType, \
+     LongType
 from pyspark.sql.functions import from_json, from_unixtime, col, explode, get_json_object, concat, lit, udf, \
      current_timestamp, to_date
 
@@ -68,7 +69,7 @@ form_wthout_init_df = formdata_rdl \
            get_json_object(formdata_rdl['item.init'], '$.s').isNull()) \
     .select(
         get_json_object('item.checked', '$.n').alias('checked').cast(IntegerType()),
-        get_json_object('item.client_time', '$.n').alias('client_time').cast(IntegerType()),
+        get_json_object('item.client_time', '$.n').alias('client_time').cast(LongType()),
         get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
         get_json_object('item.email', '$.n').alias('email').cast(IntegerType()),
         get_json_object('item.execution_time', '$.n').alias('execution_time').cast(IntegerType()),
@@ -100,7 +101,7 @@ form_init_str_df = formdata_rdl \
     .select(explode(from_json('fields', init_schema)['fields']).alias('fields'), formdata_rdl['item']) \
     .select(
         col('fields.checked').alias('checked').cast(IntegerType()),
-        get_json_object('item.client_time', '$.n').alias('client_time').cast(IntegerType()),
+        get_json_object('item.client_time', '$.n').alias('client_time').cast(LongType()),
         get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
         col('fields.email').alias('email').cast(IntegerType()),
         get_json_object('item.execution_time', '$.n').alias('execution_time').cast(IntegerType()),
@@ -133,7 +134,7 @@ form_init_bin_df = formdata_rdl \
     .select(explode(from_json('fields', init_schema)['fields']).alias('fields'), formdata_rdl['item']) \
     .select(
         col('fields.checked').alias('checked').cast(IntegerType()),
-        get_json_object('item.client_time', '$.n').alias('client_time').cast(IntegerType()),
+        get_json_object('item.client_time', '$.n').alias('client_time').cast(LongType()),
         get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
         col('fields.email').alias('email').cast(IntegerType()),
         get_json_object('item.execution_time', '$.n').alias('execution_time').cast(IntegerType()),
