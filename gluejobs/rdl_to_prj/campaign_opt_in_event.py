@@ -22,7 +22,8 @@ output_dir = "s3://jornaya-dev-us-east-1-prj/publisher_permissions/setup/{}".for
 
 campaign_opt_in_event_df = glueContext.create_dynamic_frame \
     .from_catalog(database='rdl', table_name=TABLE_NAME) \
-    .toDF()
+    .toDF() \
+    .dropDuplicates()
 
 # Grab application table so we can join application to the campaigns DataFrame and get app key
 application_df = glueContext.create_dynamic_frame \
