@@ -11,7 +11,8 @@ from pyspark.sql import SparkSession, DataFrame
 # Spin up cluster with 4.2xlarge as Master and 8 4.8xlarge core instances (running command is optimized for this setup)
 # Need to copy the code from Gitlab into EMR's home directory calling it as formdata.py
 # Use the below command to run the job on EMR
-# spark-submit formdata.py --num-executors 39 --executor-memory 43gb --driver-memory 43gb --executor-cores 6 --driver-cores 6
+# spark-submit formdata.py --num-executors 39 --executor-memory 43gb --driver-memory 43gb --executor-cores 6
+# --driver-cores 6
 # Once complete you will need to run emrhdfs_to_s3_copy.sh scripts command on EMR to copy files over to S3
 
 # This schema definition is used to extract the binary init values, using other schema like '$.b' fails on zip udf
