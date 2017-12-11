@@ -4,7 +4,7 @@ from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
 from pyspark.context import SparkContext
-from pyspark.sql.functions import coalesce, current_timestamp, lit, max as max_
+from pyspark.sql.functions import coalesce, current_timestamp, lit
 from pyspark.sql.types import IntegerType
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
@@ -20,55 +20,24 @@ DATABASE_PRJ = 'prj'
 COL_CAMPAIGN_OPT_IN = 'campaign_opt_in'
 COL_ACCOUNT_OPT_IN = 'account_opt_in'
 COL_OPT_IN_IND = 'opt_in_ind'
-COL_OPT_IN_TS = 'opt_in_ts'
 COL_DEFAULT_OPT_IN_STATE = 'default_opt_in_state'
 COL_CAMPAIGN_KEY = 'campaign_key'
 COL_ACCOUNT_ID = 'account_id'
 COL_APPLICATION_KEY = 'application_key'
-JOIN_TYPE_RIGHT = 'right'
 JOIN_TYPE_LEFT = 'left'
 
 # Define the output directory
 output_dir = 's3://jornaya-dev-us-east-1-prj/publisher_permissions/v_campaign_opt_in_state/v_campaign_opt_in_state/'
 
 # Get the campaign opt in information and select out the max timestamp for each campaign key
-campaign_event = glueContext.create_dynamic_frame \
+campaign_opt_in_event = glueContext.create_dynamic_frame \
     .from_catalog(database=DATABASE_PRJ, table_name='campaign_opt_in_event') \
-    .toDF() \
-    .alias('campaign_event')
-
-grouped_campaign_events = (campaign_event.groupBy([COL_CAMPAIGN_KEY, COL_APPLICATION_KEY])) \
-    .agg(max_(COL_OPT_IN_TS)) \
-    .withColumnRenamed('max(opt_in_ts)', COL_OPT_IN_TS) \
-    .alias('grouped_campaign_events')
-
-campaign_join_expression = [grouped_campaign_events.campaign_key == campaign_event.campaign_key,
-                            grouped_campaign_events.application_key == campaign_event.application_key,
-                            grouped_campaign_events.opt_in_ts == campaign_event.opt_in_ts]
-
-campaign_opt_in_event = campaign_event.join(grouped_campaign_events, campaign_join_expression, JOIN_TYPE_RIGHT) \
-    .select(grouped_campaign_events.campaign_key,
-            grouped_campaign_events.application_key,
-            campaign_event.opt_in_ind)
-
-# Get the account opt in information and select out the max timestamp for each account id
-# Group by account_id and app key and filter out timestamps which are less then the max for that grouping
-account_event = glueContext.create_dynamic_frame \
-    .from_catalog(database=DATABASE_PRJ, table_name='account_opt_in_event') \
     .toDF()
 
-grouped_account_events = (account_event.groupBy([COL_ACCOUNT_ID, COL_APPLICATION_KEY])) \
-    .agg(max_(COL_OPT_IN_TS)) \
-    .withColumnRenamed('max(opt_in_ts)', COL_OPT_IN_TS)
-
-account_join_expression = [grouped_account_events.account_id == account_event.account_id,
-                           grouped_account_events.application_key == account_event.application_key,
-                           grouped_account_events.opt_in_ts == account_event.opt_in_ts]
-
-account_opt_in_event = account_event.join(grouped_account_events, account_join_expression, JOIN_TYPE_RIGHT) \
-    .select(grouped_account_events.account_id,
-            grouped_account_events.application_key,
-            account_event.opt_in_ind)
+# Get the account opt in information
+account_opt_in_event = glueContext.create_dynamic_frame \
+    .from_catalog(database=DATABASE_PRJ, table_name='account_opt_in_event') \
+    .toDF()
 
 # Get all campaigns
 campaigns = glueContext.create_dynamic_frame \

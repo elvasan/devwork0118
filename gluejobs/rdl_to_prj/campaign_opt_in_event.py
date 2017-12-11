@@ -4,7 +4,7 @@ from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
 from pyspark.context import SparkContext
-from pyspark.sql.functions import col, when, lower
+from pyspark.sql.functions import col, when, lower, length, trim
 from pyspark.sql.types import ShortType
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
@@ -29,7 +29,8 @@ campaign_opt_in_event_df = glueContext.create_dynamic_frame \
     .from_catalog(database='rdl', table_name=CAMPAIGN_TABLE_NAME) \
     .toDF() \
     .select(COL_CAMPAIGN_KEY, COL_STATE, APPLICATION) \
-    .dropna(subset=[COL_CAMPAIGN_KEY])
+    .dropna(subset=[COL_CAMPAIGN_KEY]) \
+    .filter(length(trim(col(COL_CAMPAIGN_KEY))) > 0)
 
 # Grab application table so we can join application to the campaigns DataFrame and get app key
 application_df = glueContext.create_dynamic_frame \
