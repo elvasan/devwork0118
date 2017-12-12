@@ -74,7 +74,7 @@ spark = SparkSession.builder \
     .config("spark.sql.hive.metastorePartitionPruning", "true") \
     .getOrCreate()
 
-df = spark.read.schema(input_schema).parquet("s3://jornaya-dev-us-east-1-rdl/formdata/")
+df = spark.read.schema(input_schema).parquet("s3://jornaya-dev-us-east-1-rdl/formdata/").persist()
 
 fm_noinit_df = df \
     .where(get_json_object(df['item.init'], '$.b').isNull() & get_json_object(df['item.init'], '$.s').isNull())
@@ -117,7 +117,7 @@ form_init_str_df = fm_initstr_df \
         get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
         col('fields.email').alias('email').cast(IntegerType()),
         get_json_object('item.execution_time', '$.n').alias('execution_time').cast(IntegerType()),
-        col('fields.labelvisibility').alias('fieldvisibility').cast(StringType()),
+        col('fields.fieldvisibility').alias('fieldvisibility').cast(StringType()),
         get_json_object('item.http_Content-Length', '$.n').alias('http_content_length').cast(IntegerType()),
         get_json_object('item.http_User-Agent', '$.s').alias('http_user_agent').cast(StringType()),
         get_json_object('item.http_X-Forwarded-For', '$.s').alias('http_x_forwarded_for').cast(StringType()),
@@ -149,7 +149,7 @@ form_init_bin_df = fm_initbin_df \
         get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
         col('fields.email').alias('email').cast(IntegerType()),
         get_json_object('item.execution_time', '$.n').alias('execution_time').cast(IntegerType()),
-        col('fields.labelvisibility').alias('fieldvisibility').cast(StringType()),
+        col('fields.fieldvisibility').alias('fieldvisibility').cast(StringType()),
         get_json_object('item.http_Content-Length', '$.n').alias('http_content_length').cast(IntegerType()),
         get_json_object('item.http_User-Agent', '$.s').alias('http_user_agent').cast(StringType()),
         get_json_object('item.http_X-Forwarded-For', '$.s').alias('http_x_forwarded_for').cast(StringType()),
