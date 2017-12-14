@@ -47,7 +47,7 @@ init_schema = StructType([
             StructField("labelvisibility", StringType(), True),
             StructField("name", StringType(), True),
             StructField("options", IntegerType(), True),
-            StructField("option_label", StringType(), True),
+            StructField("optionLabel", StringType(), True),
             StructField("phone", IntegerType(), True),
             StructField("type", IntegerType(), True),
             StructField("value", StringType(), True),
@@ -74,7 +74,7 @@ spark = SparkSession.builder \
     .config("spark.sql.hive.metastorePartitionPruning", "true") \
     .getOrCreate()
 
-df = spark.read.schema(input_schema).parquet("s3://jornaya-dev-us-east-1-rdl/formdata/").persist()
+df = spark.read.schema(input_schema).parquet("s3://jornaya-dev-us-east-1-rdl/formdata/")
 
 fm_noinit_df = df \
     .where(get_json_object(df['item.init'], '$.b').isNull() & get_json_object(df['item.init'], '$.s').isNull())
@@ -126,7 +126,7 @@ form_init_str_df = fm_initstr_df \
         col('fields.labelvisibility').alias('labelvisibility').cast(StringType()),
         col('fields.name').alias('name').cast(StringType()),
         col('fields.options').alias('optioncount').cast(IntegerType()),
-        col('fields.option_label').alias('optionlabel').cast(StringType()),
+        col('fields.optionLabel').alias('optionlabel').cast(StringType()),
         get_json_object('item.page_id', '$.s').alias('page_id').cast(StringType()),
         col('fields.phone').alias('phone').cast(IntegerType()),
         get_json_object('item.sequence_number', '$.n').alias('sequence_number').cast(IntegerType()),
@@ -158,7 +158,7 @@ form_init_bin_df = fm_initbin_df \
         col('fields.labelvisibility').alias('labelvisibility').cast(StringType()),
         col('fields.name').alias('name').cast(StringType()),
         col('fields.options').alias('optioncount').cast(IntegerType()),
-        col('fields.option_label').alias('optionlabel').cast(StringType()),
+        col('fields.optionLabel').alias('optionlabel').cast(StringType()),
         get_json_object('item.page_id', '$.s').alias('page_id').cast(StringType()),
         col('fields.phone').alias('phone').cast(IntegerType()),
         get_json_object('item.sequence_number', '$.n').alias('sequence_number').cast(IntegerType()),
