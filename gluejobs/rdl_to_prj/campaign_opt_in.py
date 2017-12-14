@@ -15,38 +15,41 @@ glueContext = GlueContext(sc)
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-CAMPAIGN_TABLE_NAME = 'campaign_opt_in_event'
-APPLICATION = 'application'
+CAMPAIGN_TABLE_NAME = 'campaign_opt_in'
+APPLICATION_TABLE_NAME = 'application'
+COL_APPLICATION_NM = 'application_nm'
 COL_CAMPAIGN_KEY = 'campaign_key'
-COL_STATE = 'state'
 COL_APPLICATION_KEY = 'application_key'
 COL_OPT_IN_IND = 'opt_in_ind'
 
 # Define the output directory
 output_dir = "s3://jornaya-dev-us-east-1-prj/publisher_permissions/setup/{}".format(CAMPAIGN_TABLE_NAME)
 
-campaign_opt_in_event_df = glueContext.create_dynamic_frame \
+# From the campaign_opt_in table select campaign_key, opt_in_ind and application_nm
+# Then drop any campaign_keys that are null and filter out any that are blank strings.
+campaign_opt_in_df = glueContext.create_dynamic_frame \
     .from_catalog(database='rdl', table_name=CAMPAIGN_TABLE_NAME) \
     .toDF() \
-    .select(COL_CAMPAIGN_KEY, COL_STATE, APPLICATION) \
+    .select(COL_CAMPAIGN_KEY, COL_OPT_IN_IND, COL_APPLICATION_NM) \
     .dropna(subset=[COL_CAMPAIGN_KEY]) \
     .filter(length(trim(col(COL_CAMPAIGN_KEY))) > 0)
 
-# Grab application table so we can join application to the campaigns DataFrame and get app key
+# Grab application table so we can join to campaign_opt_in and get application key
 application_df = glueContext.create_dynamic_frame \
-    .from_catalog(database='prj', table_name=APPLICATION) \
+    .from_catalog(database='prj', table_name=APPLICATION_TABLE_NAME) \
     .toDF()
 
-campaign_opt_in_event = campaign_opt_in_event_df \
-    .join(application_df, lower(campaign_opt_in_event_df.application) == lower(application_df.application_nm)) \
-    .select(COL_CAMPAIGN_KEY, COL_STATE, COL_APPLICATION_KEY) \
-    .withColumn(COL_OPT_IN_IND, (when(lower(col(COL_STATE)) == 'in', 1)
-                                 .otherwise(when(lower(col(COL_STATE)) == 'out', 0)
+# Join campaign_opt_in to application to get app key, replace "In/Out" values with 1/0/None and drop any rows
+# that come back with None in opt_in_ind
+campaign_opt_in = campaign_opt_in_df \
+    .join(application_df, lower(campaign_opt_in_df.application) == lower(application_df.application_nm)) \
+    .select(COL_CAMPAIGN_KEY, COL_OPT_IN_IND, COL_APPLICATION_KEY) \
+    .withColumn(COL_OPT_IN_IND, (when(lower(col(COL_OPT_IN_IND)) == 'in', 1)
+                                 .otherwise(when(lower(col(COL_OPT_IN_IND)) == 'out', 0)
                                             .otherwise(None))).cast(ShortType())) \
     .dropna(subset=[COL_OPT_IN_IND]) \
-    .drop(COL_STATE) \
     .dropDuplicates([COL_CAMPAIGN_KEY, COL_APPLICATION_KEY])
 
-campaign_opt_in_event.write.parquet(output_dir, mode='overwrite')
+campaign_opt_in.write.parquet(output_dir, mode='overwrite')
 
 job.commit()
