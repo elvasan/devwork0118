@@ -4,8 +4,8 @@ from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
 from pyspark.context import SparkContext
-from pyspark.sql.functions import coalesce, current_timestamp, lit
-from pyspark.sql.types import IntegerType
+from pyspark.sql.functions import coalesce, current_timestamp, lit, col
+from pyspark.sql.types import ShortType, StringType
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
@@ -93,8 +93,10 @@ v_campaign_opt_in_state = camp_acct_campaign_state_join.select('*', coalesce(
     camp_acct_campaign_state_join[COL_DEFAULT_OPT_IN_IND])) \
     .withColumnRenamed('coalesce(campaign_opt_in, account_opt_in, default_opt_in_ind)', COL_OPT_IN_IND) \
     .drop(COL_CAMPAIGN_OPT_IN, COL_ACCOUNT_OPT_IN, COL_DEFAULT_OPT_IN_IND) \
+    .withColumn(COL_APPLICATION_KEY, col(COL_APPLICATION_KEY).cast(ShortType())) \
+    .withColumn(COL_OPT_IN_IND, col(COL_OPT_IN_IND).cast(ShortType())) \
     .withColumn('insert_ts', current_timestamp()) \
-    .withColumn('insert_job_run_id', lit(1).cast(IntegerType()))
+    .withColumn('insert_job_run_id', lit(1).cast(StringType()))
 
 v_campaign_opt_in_state.write.parquet(output_dir, mode='overwrite', compression='snappy')
 
