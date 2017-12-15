@@ -1,11 +1,12 @@
 from functools import reduce
-import base64
-import zlib
-from pyspark.sql.functions import from_json, from_unixtime, udf, col, explode, get_json_object, concat, lit, \
-     current_timestamp, to_date
-from pyspark.sql.types import StringType, StructType, StructField, ArrayType, IntegerType, DoubleType, TimestampType, \
-     MapType, LongType
+
 from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.functions import from_json, from_unixtime, udf, col, explode, get_json_object, concat, lit, \
+    current_timestamp, to_date
+from pyspark.sql.types import StringType, StructType, StructField, ArrayType, IntegerType, DoubleType, TimestampType, \
+    MapType, LongType
+
+from glutils.job_utils import zipped_b64_to_string
 
 # Instruction on running this job on EMR cluster
 # Spin up cluster with 4.2xlarge as Master and 8 4.8xlarge core instances (running command is optimized for this setup)
@@ -19,13 +20,6 @@ from pyspark.sql import SparkSession, DataFrame
 b_schema = StructType([StructField('b', StringType())])
 
 input_schema = StructType([StructField("item", MapType(StringType(), StringType()))])
-
-
-# This function reads in the binary compressed dynamodb column and returns a string value
-def zipped_b64_to_string(val):
-    if val:
-        zipped_string = base64.b64decode(val)
-        return zlib.decompress(zipped_string, 16 + zlib.MAX_WBITS).decode('utf-8')
 
 
 # This function does an UNIONALL of all the dataframes passed in
@@ -55,11 +49,11 @@ init_schema = StructType([
     ), True)
 ])
 
-#TBL_NAME = 'formdata'
+# TBL_NAME = 'formdata'
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
-#output_dir = "s3://jornaya-dev-us-east-1-udl/krish/{}".format(TBL_NAME)
+# output_dir = "s3://jornaya-dev-us-east-1-udl/krish/{}".format(TBL_NAME)
 
 # This will be stored on the EMR local HDFS
 output_dir = "/home/hadoop/formdata/"
@@ -81,29 +75,29 @@ fm_noinit_df = df \
 
 form_wthout_init_df = fm_noinit_df \
     .select(
-        get_json_object('item.checked', '$.n').alias('checked').cast(IntegerType()),
-        get_json_object('item.client_time', '$.n').alias('client_time').cast(LongType()),
-        get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
-        get_json_object('item.email', '$.n').alias('email').cast(IntegerType()),
-        get_json_object('item.execution_time', '$.n').alias('execution_time').cast(IntegerType()),
-        get_json_object('item.fieldvisibility', '$.m').alias('fieldvisibility').cast(StringType()),
-        get_json_object('item.http_Content-Length', '$.n').alias('http_content_length').cast(IntegerType()),
-        get_json_object('item.http_User-Agent', '$.s').alias('http_user_agent').cast(StringType()),
-        get_json_object('item.http_X-Forwarded-For', '$.s').alias('http_x_forwarded_for').cast(StringType()),
-        get_json_object('item.id', '$.s').alias('id').cast(StringType()),
-        get_json_object('item.label', '$.s').alias('label').cast(StringType()),
-        get_json_object('item.labelvisibility', '$.s').alias('labelvisibility').cast(StringType()),
-        get_json_object('item.name', '$.s').alias('name').cast(StringType()),
-        get_json_object('item.options', '$.s').alias('optioncount').cast(IntegerType()),
-        get_json_object('item.optionLabel', '$.s').alias('optionlabel').cast(StringType()),
-        get_json_object('item.page_id', '$.s').alias('page_id').cast(StringType()),
-        get_json_object('item.phone', '$.n').alias('phone').cast(IntegerType()),
-        get_json_object('item.sequence_number', '$.n').alias('sequence_number').cast(IntegerType()),
-        get_json_object('item.token', '$.s').alias('token').cast(StringType()),
-        get_json_object('item.type', '$.n').alias('type').cast(IntegerType()),
-        get_json_object('item.value', '$.s').alias('value').cast(StringType()),
-        from_unixtime(get_json_object('item.created', '$.n')).alias('source_ts').cast(TimestampType())
-    )
+    get_json_object('item.checked', '$.n').alias('checked').cast(IntegerType()),
+    get_json_object('item.client_time', '$.n').alias('client_time').cast(LongType()),
+    get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
+    get_json_object('item.email', '$.n').alias('email').cast(IntegerType()),
+    get_json_object('item.execution_time', '$.n').alias('execution_time').cast(IntegerType()),
+    get_json_object('item.fieldvisibility', '$.m').alias('fieldvisibility').cast(StringType()),
+    get_json_object('item.http_Content-Length', '$.n').alias('http_content_length').cast(IntegerType()),
+    get_json_object('item.http_User-Agent', '$.s').alias('http_user_agent').cast(StringType()),
+    get_json_object('item.http_X-Forwarded-For', '$.s').alias('http_x_forwarded_for').cast(StringType()),
+    get_json_object('item.id', '$.s').alias('id').cast(StringType()),
+    get_json_object('item.label', '$.s').alias('label').cast(StringType()),
+    get_json_object('item.labelvisibility', '$.s').alias('labelvisibility').cast(StringType()),
+    get_json_object('item.name', '$.s').alias('name').cast(StringType()),
+    get_json_object('item.options', '$.s').alias('optioncount').cast(IntegerType()),
+    get_json_object('item.optionLabel', '$.s').alias('optionlabel').cast(StringType()),
+    get_json_object('item.page_id', '$.s').alias('page_id').cast(StringType()),
+    get_json_object('item.phone', '$.n').alias('phone').cast(IntegerType()),
+    get_json_object('item.sequence_number', '$.n').alias('sequence_number').cast(IntegerType()),
+    get_json_object('item.token', '$.s').alias('token').cast(StringType()),
+    get_json_object('item.type', '$.n').alias('type').cast(IntegerType()),
+    get_json_object('item.value', '$.s').alias('value').cast(StringType()),
+    from_unixtime(get_json_object('item.created', '$.n')).alias('source_ts').cast(TimestampType())
+)
 
 fm_initstr_df = df \
     .where(df['item.init'].isNotNull())
@@ -112,29 +106,29 @@ form_init_str_df = fm_initstr_df \
     .select(concat(lit('{"fields":'), get_json_object(df['item.init'], '$.s'), lit('}')).alias('fields'), df['item']) \
     .select(explode(from_json('fields', init_schema)['fields']).alias('fields'), df['item']) \
     .select(
-        col('fields.checked').alias('checked').cast(IntegerType()),
-        get_json_object('item.client_time', '$.n').alias('client_time').cast(LongType()),
-        get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
-        col('fields.email').alias('email').cast(IntegerType()),
-        get_json_object('item.execution_time', '$.n').alias('execution_time').cast(IntegerType()),
-        col('fields.fieldvisibility').alias('fieldvisibility').cast(StringType()),
-        get_json_object('item.http_Content-Length', '$.n').alias('http_content_length').cast(IntegerType()),
-        get_json_object('item.http_User-Agent', '$.s').alias('http_user_agent').cast(StringType()),
-        get_json_object('item.http_X-Forwarded-For', '$.s').alias('http_x_forwarded_for').cast(StringType()),
-        col('fields.id').alias('id').cast(StringType()),
-        col('fields.label').alias('label').cast(StringType()),
-        col('fields.labelvisibility').alias('labelvisibility').cast(StringType()),
-        col('fields.name').alias('name').cast(StringType()),
-        col('fields.options').alias('optioncount').cast(IntegerType()),
-        col('fields.optionLabel').alias('optionlabel').cast(StringType()),
-        get_json_object('item.page_id', '$.s').alias('page_id').cast(StringType()),
-        col('fields.phone').alias('phone').cast(IntegerType()),
-        get_json_object('item.sequence_number', '$.n').alias('sequence_number').cast(IntegerType()),
-        get_json_object('item.token', '$.s').alias('token').cast(StringType()),
-        col('fields.type').alias('type').cast(IntegerType()),
-        col('fields.value').alias('value').cast(StringType()),
-        from_unixtime(get_json_object('item.created', '$.n')).alias('source_ts').cast(TimestampType())
-    )
+    col('fields.checked').alias('checked').cast(IntegerType()),
+    get_json_object('item.client_time', '$.n').alias('client_time').cast(LongType()),
+    get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
+    col('fields.email').alias('email').cast(IntegerType()),
+    get_json_object('item.execution_time', '$.n').alias('execution_time').cast(IntegerType()),
+    col('fields.fieldvisibility').alias('fieldvisibility').cast(StringType()),
+    get_json_object('item.http_Content-Length', '$.n').alias('http_content_length').cast(IntegerType()),
+    get_json_object('item.http_User-Agent', '$.s').alias('http_user_agent').cast(StringType()),
+    get_json_object('item.http_X-Forwarded-For', '$.s').alias('http_x_forwarded_for').cast(StringType()),
+    col('fields.id').alias('id').cast(StringType()),
+    col('fields.label').alias('label').cast(StringType()),
+    col('fields.labelvisibility').alias('labelvisibility').cast(StringType()),
+    col('fields.name').alias('name').cast(StringType()),
+    col('fields.options').alias('optioncount').cast(IntegerType()),
+    col('fields.optionLabel').alias('optionlabel').cast(StringType()),
+    get_json_object('item.page_id', '$.s').alias('page_id').cast(StringType()),
+    col('fields.phone').alias('phone').cast(IntegerType()),
+    get_json_object('item.sequence_number', '$.n').alias('sequence_number').cast(IntegerType()),
+    get_json_object('item.token', '$.s').alias('token').cast(StringType()),
+    col('fields.type').alias('type').cast(IntegerType()),
+    col('fields.value').alias('value').cast(StringType()),
+    from_unixtime(get_json_object('item.created', '$.n')).alias('source_ts').cast(TimestampType())
+)
 
 fm_initbin_df = df \
     .where(get_json_object(df['item.init'], '$.b').isNotNull())
@@ -144,29 +138,29 @@ form_init_bin_df = fm_initbin_df \
     .select(concat(lit('{"fields":'), b64_udf('init_binary'), lit('}')).alias('fields'), df['item']) \
     .select(explode(from_json('fields', init_schema)['fields']).alias('fields'), df['item']) \
     .select(
-        col('fields.checked').alias('checked').cast(IntegerType()),
-        get_json_object('item.client_time', '$.n').alias('client_time').cast(LongType()),
-        get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
-        col('fields.email').alias('email').cast(IntegerType()),
-        get_json_object('item.execution_time', '$.n').alias('execution_time').cast(IntegerType()),
-        col('fields.fieldvisibility').alias('fieldvisibility').cast(StringType()),
-        get_json_object('item.http_Content-Length', '$.n').alias('http_content_length').cast(IntegerType()),
-        get_json_object('item.http_User-Agent', '$.s').alias('http_user_agent').cast(StringType()),
-        get_json_object('item.http_X-Forwarded-For', '$.s').alias('http_x_forwarded_for').cast(StringType()),
-        col('fields.id').alias('id').cast(StringType()),
-        col('fields.label').alias('label').cast(StringType()),
-        col('fields.labelvisibility').alias('labelvisibility').cast(StringType()),
-        col('fields.name').alias('name').cast(StringType()),
-        col('fields.options').alias('optioncount').cast(IntegerType()),
-        col('fields.optionLabel').alias('optionlabel').cast(StringType()),
-        get_json_object('item.page_id', '$.s').alias('page_id').cast(StringType()),
-        col('fields.phone').alias('phone').cast(IntegerType()),
-        get_json_object('item.sequence_number', '$.n').alias('sequence_number').cast(IntegerType()),
-        get_json_object('item.token', '$.s').alias('token').cast(StringType()),
-        col('fields.type').alias('type').cast(IntegerType()),
-        col('fields.value').alias('value').cast(StringType()),
-        from_unixtime(get_json_object('item.created', '$.n')).alias('source_ts').cast(TimestampType())
-    )
+    col('fields.checked').alias('checked').cast(IntegerType()),
+    get_json_object('item.client_time', '$.n').alias('client_time').cast(LongType()),
+    get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
+    col('fields.email').alias('email').cast(IntegerType()),
+    get_json_object('item.execution_time', '$.n').alias('execution_time').cast(IntegerType()),
+    col('fields.fieldvisibility').alias('fieldvisibility').cast(StringType()),
+    get_json_object('item.http_Content-Length', '$.n').alias('http_content_length').cast(IntegerType()),
+    get_json_object('item.http_User-Agent', '$.s').alias('http_user_agent').cast(StringType()),
+    get_json_object('item.http_X-Forwarded-For', '$.s').alias('http_x_forwarded_for').cast(StringType()),
+    col('fields.id').alias('id').cast(StringType()),
+    col('fields.label').alias('label').cast(StringType()),
+    col('fields.labelvisibility').alias('labelvisibility').cast(StringType()),
+    col('fields.name').alias('name').cast(StringType()),
+    col('fields.options').alias('optioncount').cast(IntegerType()),
+    col('fields.optionLabel').alias('optionlabel').cast(StringType()),
+    get_json_object('item.page_id', '$.s').alias('page_id').cast(StringType()),
+    col('fields.phone').alias('phone').cast(IntegerType()),
+    get_json_object('item.sequence_number', '$.n').alias('sequence_number').cast(IntegerType()),
+    get_json_object('item.token', '$.s').alias('token').cast(StringType()),
+    col('fields.type').alias('type').cast(IntegerType()),
+    col('fields.value').alias('value').cast(StringType()),
+    from_unixtime(get_json_object('item.created', '$.n')).alias('source_ts').cast(TimestampType())
+)
 
 form_un_df = unionall(form_wthout_init_df, form_init_str_df, form_init_bin_df).persist()
 

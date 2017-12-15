@@ -5,3 +5,4 @@ invoke
 jupyter
 coverage
 prospector
+pylint==1.8.1

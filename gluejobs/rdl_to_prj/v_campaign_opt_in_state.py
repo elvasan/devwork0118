@@ -3,9 +3,9 @@ import sys
 from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
-from pyspark.context import SparkContext
-from pyspark.sql.functions import coalesce, current_timestamp, lit, col
-from pyspark.sql.types import ShortType, StringType
+from pyspark.context import SparkContext  # pylint: disable=wrong-import-order
+from pyspark.sql.functions import coalesce, current_timestamp, lit, col  # pylint: disable=wrong-import-order
+from pyspark.sql.types import ShortType, StringType  # pylint: disable=wrong-import-order
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 

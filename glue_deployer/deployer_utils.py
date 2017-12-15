@@ -1,9 +1,8 @@
-import os
 import logging
+import os
 from zipfile import ZipFile
 
 import boto3
-
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger('glue_deployer.deployer_utils')
@@ -158,7 +157,7 @@ def _upload_packages(jobfile, env, s3):
         s3.Bucket(_get_job_bucket(env)).put_object(Key=keypath, Body=data)
 
 
-def update_or_create_job(jobfile, env):
+def update_or_create_job(jobfile, env):  # pylint:disable=inconsistent-return-statements
     session = _init_boto_session()
     glue_client = session.client('glue')
     s3_client = session.resource('s3')
