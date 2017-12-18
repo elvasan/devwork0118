@@ -4,7 +4,7 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import from_json, from_unixtime, udf, col, explode, get_json_object, concat, lit, \
     current_timestamp, to_date
 from pyspark.sql.types import StringType, StructType, StructField, ArrayType, IntegerType, DoubleType, TimestampType, \
-    MapType, LongType
+    MapType, LongType, BooleanType
 
 from glutils.job_utils import zipped_b64_to_string
 
@@ -33,7 +33,7 @@ b64_udf = udf(zipped_b64_to_string, StringType())
 init_schema = StructType([
     StructField("fields", ArrayType(
         StructType([
-            StructField("checked", IntegerType(), True),
+            StructField("checked", BooleanType(), True),
             StructField("email", IntegerType(), True),
             StructField("fieldvisibility", StringType(), True),
             StructField("id", StringType(), True),
@@ -75,7 +75,7 @@ fm_noinit_df = df \
 
 form_wthout_init_df = fm_noinit_df \
     .select(
-    get_json_object('item.checked', '$.n').alias('checked').cast(IntegerType()),
+    get_json_object('item.checked', '$.bOOL').alias('checked').cast(IntegerType()),
     get_json_object('item.client_time', '$.n').alias('client_time').cast(LongType()),
     get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
     get_json_object('item.email', '$.n').alias('email').cast(IntegerType()),
