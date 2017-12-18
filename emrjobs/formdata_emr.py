@@ -74,7 +74,7 @@ spark = SparkSession.builder \
     .config("spark.sql.hive.metastorePartitionPruning", "true") \
     .getOrCreate()
 
-df = spark.read.schema(input_schema).parquet("s3://jornaya-dev-us-east-1-rdl/formdata/").persist()
+df = spark.read.schema(input_schema).parquet("s3://jornaya-dev-us-east-1-rdl/formdata/")
 
 fm_noinit_df = df \
     .where(get_json_object(df['item.init'], '$.b').isNull() & get_json_object(df['item.init'], '$.s').isNull())
