@@ -1,12 +1,11 @@
 from functools import reduce
-
-from pyspark.sql import SparkSession, DataFrame
+import base64
+import zlib
 from pyspark.sql.functions import from_json, from_unixtime, udf, col, explode, get_json_object, concat, lit, \
     current_timestamp, to_date
 from pyspark.sql.types import StringType, StructType, StructField, ArrayType, IntegerType, DoubleType, TimestampType, \
     MapType, LongType, BooleanType
-
-from glutils.job_utils import zipped_b64_to_string
+from pyspark.sql import SparkSession, DataFrame
 
 # Instruction on running this job on EMR cluster
 # Spin up cluster with 4.2xlarge as Master and 8 4.8xlarge core instances (running command is optimized for this setup)
@@ -20,6 +19,13 @@ from glutils.job_utils import zipped_b64_to_string
 b_schema = StructType([StructField('b', StringType())])
 
 input_schema = StructType([StructField("item", MapType(StringType(), StringType()))])
+
+
+# This function reads in the binary compressed dynamodb column and returns a string value
+def zipped_b64_to_string(val):
+    if val:
+        zipped_string = base64.b64decode(val)
+        return zlib.decompress(zipped_string, 16 + zlib.MAX_WBITS).decode('utf-8')
 
 
 # This function does an UNIONALL of all the dataframes passed in
@@ -41,7 +47,7 @@ init_schema = StructType([
             StructField("labelvisibility", StringType(), True),
             StructField("name", StringType(), True),
             StructField("options", IntegerType(), True),
-            StructField("optionLabel", StringType(), True),
+            StructField("option_label", StringType(), True),
             StructField("phone", IntegerType(), True),
             StructField("type", IntegerType(), True),
             StructField("value", StringType(), True),
@@ -49,11 +55,11 @@ init_schema = StructType([
     ), True)
 ])
 
-# TBL_NAME = 'formdata'
+#TBL_NAME = 'formdata'
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
-# output_dir = "s3://jornaya-dev-us-east-1-udl/krish/{}".format(TBL_NAME)
+#output_dir = "s3://jornaya-dev-us-east-1-udl/krish/{}".format(TBL_NAME)
 
 # This will be stored on the EMR local HDFS
 output_dir = "/home/hadoop/formdata/"
@@ -68,7 +74,7 @@ spark = SparkSession.builder \
     .config("spark.sql.hive.metastorePartitionPruning", "true") \
     .getOrCreate()
 
-df = spark.read.schema(input_schema).parquet("s3://jornaya-dev-us-east-1-rdl/formdata/")
+df = spark.read.schema(input_schema).parquet("s3://jornaya-dev-us-east-1-rdl/formdata/").persist()
 
 fm_noinit_df = df \
     .where(get_json_object(df['item.init'], '$.b').isNull() & get_json_object(df['item.init'], '$.s').isNull())
@@ -120,7 +126,7 @@ form_init_str_df = fm_initstr_df \
     col('fields.labelvisibility').alias('labelvisibility').cast(StringType()),
     col('fields.name').alias('name').cast(StringType()),
     col('fields.options').alias('optioncount').cast(IntegerType()),
-    col('fields.optionLabel').alias('optionlabel').cast(StringType()),
+    col('fields.option_label').alias('optionlabel').cast(StringType()),
     get_json_object('item.page_id', '$.s').alias('page_id').cast(StringType()),
     col('fields.phone').alias('phone').cast(IntegerType()),
     get_json_object('item.sequence_number', '$.n').alias('sequence_number').cast(IntegerType()),
@@ -152,7 +158,7 @@ form_init_bin_df = fm_initbin_df \
     col('fields.labelvisibility').alias('labelvisibility').cast(StringType()),
     col('fields.name').alias('name').cast(StringType()),
     col('fields.options').alias('optioncount').cast(IntegerType()),
-    col('fields.optionLabel').alias('optionlabel').cast(StringType()),
+    col('fields.option_label').alias('optionlabel').cast(StringType()),
     get_json_object('item.page_id', '$.s').alias('page_id').cast(StringType()),
     col('fields.phone').alias('phone').cast(IntegerType()),
     get_json_object('item.sequence_number', '$.n').alias('sequence_number').cast(IntegerType()),
