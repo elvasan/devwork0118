@@ -23,9 +23,11 @@ input_schema = StructType([StructField("item", MapType(StringType(), StringType(
 
 # This function reads in the binary compressed dynamodb column and returns a string value
 def zipped_b64_to_string(val):
-    if val:
-        zipped_string = base64.b64decode(val)
-        return zlib.decompress(zipped_string, 16 + zlib.MAX_WBITS).decode('utf-8')
+    if not val:
+        return None
+
+    zipped_string = base64.b64decode(val)
+    return zlib.decompress(zipped_string, 16 + zlib.MAX_WBITS).decode('utf-8')
 
 
 # This function does an UNIONALL of all the dataframes passed in
