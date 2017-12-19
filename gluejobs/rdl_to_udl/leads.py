@@ -117,7 +117,7 @@ leads_partitioned = leads_df.withColumn('create_day', to_date(from_unixtime(lead
 # TODO: pass the write mode in as an arg
 leads_partitioned.write.parquet(output_dir,
                                 mode='overwrite',
-                                partitionBy=['create_day'],
+                                partitionBy=['create_day', 'insert_job_run_id'],
                                 compression='snappy')
 
 job.commit()
