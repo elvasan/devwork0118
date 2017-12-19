@@ -1,12 +1,11 @@
 from functools import reduce
-
-from pyspark.sql import SparkSession, DataFrame
+import base64
+import zlib
 from pyspark.sql.functions import from_json, from_unixtime, udf, col, explode, get_json_object, concat, lit, \
     current_timestamp, to_date
 from pyspark.sql.types import StringType, StructType, StructField, ArrayType, IntegerType, DoubleType, TimestampType, \
-    MapType, LongType
-
-from glutils.job_utils import zipped_b64_to_string
+    MapType, LongType, BooleanType
+from pyspark.sql import SparkSession, DataFrame
 
 # Instruction on running this job on EMR cluster
 # Spin up cluster with 4.2xlarge as Master and 8 4.8xlarge core instances (running command is optimized for this setup)
@@ -22,6 +21,15 @@ b_schema = StructType([StructField('b', StringType())])
 input_schema = StructType([StructField("item", MapType(StringType(), StringType()))])
 
 
+# This function reads in the binary compressed dynamodb column and returns a string value
+def zipped_b64_to_string(val):
+    if not val:
+        return None
+
+    zipped_string = base64.b64decode(val)
+    return zlib.decompress(zipped_string, 16 + zlib.MAX_WBITS).decode('utf-8')
+
+
 # This function does an UNIONALL of all the dataframes passed in
 def unionall(*dfs):
     return reduce(DataFrame.unionAll, dfs)
@@ -33,7 +41,7 @@ b64_udf = udf(zipped_b64_to_string, StringType())
 init_schema = StructType([
     StructField("fields", ArrayType(
         StructType([
-            StructField("checked", IntegerType(), True),
+            StructField("checked", BooleanType(), True),
             StructField("email", IntegerType(), True),
             StructField("fieldvisibility", StringType(), True),
             StructField("id", StringType(), True),
@@ -49,11 +57,11 @@ init_schema = StructType([
     ), True)
 ])
 
-# TBL_NAME = 'formdata'
+#TBL_NAME = 'formdata'
 
 # output directories
 # TODO: pass these file paths in as args instead of hardcoding them
-# output_dir = "s3://jornaya-dev-us-east-1-udl/krish/{}".format(TBL_NAME)
+#output_dir = "s3://jornaya-dev-us-east-1-udl/krish/{}".format(TBL_NAME)
 
 # This will be stored on the EMR local HDFS
 output_dir = "/home/hadoop/formdata/"
@@ -75,7 +83,7 @@ fm_noinit_df = df \
 
 form_wthout_init_df = fm_noinit_df \
     .select(
-    get_json_object('item.checked', '$.n').alias('checked').cast(IntegerType()),
+    get_json_object('item.checked', '$.bOOL').alias('checked').cast(IntegerType()),
     get_json_object('item.client_time', '$.n').alias('client_time').cast(LongType()),
     get_json_object('item.created', '$.n').alias('created').cast(DoubleType()),
     get_json_object('item.email', '$.n').alias('email').cast(IntegerType()),
