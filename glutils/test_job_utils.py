@@ -1,6 +1,6 @@
 import unittest
 
-from .job_utils import code_format, zipped_b64_to_string, get_dynamodb_value
+from .job_utils import code_format, zipped_b64_to_string, get_dynamodb_value, ip_address
 
 
 class TestJobUtilFunctions(unittest.TestCase):
@@ -38,6 +38,11 @@ class TestJobUtilFunctions(unittest.TestCase):
         initval = '{"n":"1"}'
         expected = '1'
         self.assertEqual(expected, get_dynamodb_value(initval))
+
+    def test_ip_address(self):
+        initval = '3093326845'
+        expected = '184.96.107.253'
+        self.assertEqual(expected, ip_address(initval))
 
 
 if __name__ == '__main__':
