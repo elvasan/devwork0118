@@ -9,7 +9,7 @@ from pyspark.sql.types import IntegerType, TimestampType, StringType
 from awsglue.utils import getResolvedOptions  # pylint: disable=import-error
 from awsglue.context import GlueContext  # pylint: disable=import-error
 from awsglue.job import Job  # pylint: disable=import-error
-from glutils import ip_address  # pylint: disable=import-error
+from glutils.job_utils import ip_address  # pylint: disable=import-error
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
 
