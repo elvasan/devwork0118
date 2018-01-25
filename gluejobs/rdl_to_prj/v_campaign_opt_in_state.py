@@ -7,7 +7,7 @@ from pyspark.context import SparkContext  # pylint: disable=wrong-import-order
 from pyspark.sql.functions import coalesce, current_timestamp, lit, col  # pylint: disable=wrong-import-order
 from pyspark.sql.types import ShortType, StringType  # pylint: disable=wrong-import-order
 
-args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'BUCKET_NAME', 'CAMPAIGN_DATABASE', 'PUBLISHER_PERMISSION_DATABASE'])
 
 # context and job setup
 sc = SparkContext()
@@ -15,8 +15,9 @@ glueContext = GlueContext(sc)
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-DATABASE_FDL = 'fdl'
-DATABASE_PRJ = 'prj'
+BUCKET_NAME = args['BUCKET_NAME']
+CAMPAIGN_DATABASE = args['CAMPAIGN_DATABASE']
+PUBLISHER_PERMISSION_DATABASE = args['PUBLISHER_PERMISSION_DATABASE']
 COL_CAMPAIGN_OPT_IN = 'campaign_opt_in'
 COL_ACCOUNT_OPT_IN = 'account_opt_in'
 COL_OPT_IN_IND = 'opt_in_ind'
@@ -27,26 +28,26 @@ COL_APPLICATION_KEY = 'application_key'
 JOIN_TYPE_LEFT = 'left'
 
 # Define the output directory
-output_dir = 's3://jornaya-dev-us-east-1-prj/publisher_permissions/v_campaign_opt_in_state/'
+output_dir = "s3://{}/publisher_permissions/v_campaign_opt_in_state/".format(BUCKET_NAME)
 
 # Get the campaign opt in information and select out the max timestamp for each campaign key
 campaign_opt_in = glueContext.create_dynamic_frame \
-    .from_catalog(database=DATABASE_PRJ, table_name='campaign_opt_in') \
+    .from_catalog(database=PUBLISHER_PERMISSION_DATABASE, table_name='campaign_opt_in') \
     .toDF()
 
 # Get the account opt in information
 account_opt_in = glueContext.create_dynamic_frame \
-    .from_catalog(database=DATABASE_PRJ, table_name='account_opt_in') \
+    .from_catalog(database=PUBLISHER_PERMISSION_DATABASE, table_name='account_opt_in') \
     .toDF()
 
 # Get all campaigns
 campaigns = glueContext.create_dynamic_frame \
-    .from_catalog(database=DATABASE_FDL, table_name='campaign') \
+    .from_catalog(database=CAMPAIGN_DATABASE, table_name='campaign') \
     .toDF()
 
 # Grab application table so we can join application to the campaigns DataFrame and get app key
 application = glueContext.create_dynamic_frame \
-    .from_catalog(database=DATABASE_PRJ, table_name='application') \
+    .from_catalog(database=PUBLISHER_PERMISSION_DATABASE, table_name='application') \
     .toDF()
 
 # Filter out only the information we need from campaigns and drop any duplicates:
