@@ -1,0 +1,46 @@
+{
+  "Name": "leads_0917_autocreate",
+  "Owner": "owner",
+  "LastAccessTime": 1507577520.0,
+  "Retention": 0,
+  "StorageDescriptor": {
+    "Columns": [
+      {
+        "Name": "item",
+        "Type": "map<string,string>"
+      }
+    ],
+    "Location": "s3://jornaya-dev-us-east-1-rdl/leads/created=2017-09-30/",
+    "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+    "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+    "Compressed": true,
+    "NumberOfBuckets": -1,
+    "SerdeInfo": {
+      "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+      "Parameters": {}
+    },
+    "BucketColumns": [],
+    "SortColumns": [],
+    "Parameters": {
+      "CrawlerSchemaDeserializerVersion": "1.0",
+      "CrawlerSchemaSerializerVersion": "1.0",
+      "UPDATED_BY_CRAWLER": "NAZAR-jornaya-dev-us-east-1-rdl-leads",
+      "classification": "UNKNOWN",
+      "compressionType": "unknown",
+      "objectCount": "1",
+      "typeOfData": "file"
+    },
+    "StoredAsSubDirectories": false
+  },
+  "PartitionKeys": [],
+  "TableType": "EXTERNAL_TABLE",
+  "Parameters": {
+    "CrawlerSchemaDeserializerVersion": "1.0",
+    "CrawlerSchemaSerializerVersion": "1.0",
+    "UPDATED_BY_CRAWLER": "NAZAR-jornaya-dev-us-east-1-rdl-leads",
+    "classification": "parquet",
+    "compressionType": "none",
+    "objectCount": "1",
+    "typeOfData": "file"
+  }
+}
